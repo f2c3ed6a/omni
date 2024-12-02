@@ -5,19 +5,12 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 
 import "../interfaces/IMintableContract.sol";
-import "../interfaces/ISupplyFeeder.sol";
 
-contract VaultWithoutNative is
-    Initializable,
-    AccessControlUpgradeable,
-    PausableUpgradeable,
-    ReentrancyGuardUpgradeable
-{
+contract VaultWithoutNative is Initializable, AccessControlUpgradeable, ReentrancyGuardUpgradeable {
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
 
@@ -25,7 +18,7 @@ contract VaultWithoutNative is
     using Address for address;
 
     address private _DEPRECATED_WBTC_;
-    address public uniBTC;
+    address public omniBTC;
 
     mapping(address => uint256) public caps;
     mapping(address => bool) public paused;
@@ -37,7 +30,6 @@ contract VaultWithoutNative is
 
     uint256 public constant EXCHANGE_RATE_BASE = 1e10;
 
-    address public supplyFeeder;
     //================== 2024/09/30 ===========
     mapping(address => bool) public allowedTokenList;
     mapping(address => bool) public allowedTargetList;
@@ -56,7 +48,7 @@ contract VaultWithoutNative is
     }
 
     /**
-     * @dev mint uniBTC with the given type of wrapped BTC
+     * @dev mint omniBTC with the given type of wrapped BTC
      */
     function mint(address _token, uint256 _amount) external serviceNormal {
         require(allowedTokenList[_token] && !paused[_token], "SYS002");
@@ -82,17 +74,16 @@ contract VaultWithoutNative is
      *
      * ======================================================================================
      */
-    function initialize(address _defaultAdmin, address _uniBTC) public initializer {
+    function initialize(address _defaultAdmin, address _omniBTC) public initializer {
         __AccessControl_init();
-        __Pausable_init();
         __ReentrancyGuard_init();
 
-        require(_uniBTC != address(0x0), "SYS001");
+        require(_omniBTC != address(0x0), "SYS001");
 
         _grantRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
         _grantRole(PAUSER_ROLE, _defaultAdmin);
 
-        uniBTC = _uniBTC;
+        omniBTC = _omniBTC;
     }
 
     /**
@@ -187,13 +178,6 @@ contract VaultWithoutNative is
     }
 
     /**
-     * @dev set the supply feeder address to track the asset supply for the vault
-     */
-    function setSupplyFeeder(address _supplyFeeder) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        supplyFeeder = _supplyFeeder;
-    }
-
-    /**
      * ======================================================================================
      *
      * INTERNAL
@@ -202,30 +186,30 @@ contract VaultWithoutNative is
      */
 
     /**
-     * @dev mint uniBTC with wrapped BTC tokens
+     * @dev mint omniBTC with wrapped BTC tokens
      */
     function _mint(address _sender, address _token, uint256 _amount) internal {
-        (, uint256 uniBTCAmount) = _amounts(_token, _amount);
-        require(uniBTCAmount > 0, "USR010");
+        (, uint256 omniBTCAmount) = _amounts(_token, _amount);
+        require(omniBTCAmount > 0, "USR010");
 
-        uint256 totalSupply = ISupplyFeeder(supplyFeeder).totalSupply(_token);
+        uint256 totalSupply = IERC20(_token).totalSupply();
         require((totalSupply + _amount <= caps[_token]) && caps[_token] != 0, "USR003");
 
         IERC20(_token).safeTransferFrom(_sender, address(this), _amount);
-        IMintableContract(uniBTC).mint(_sender, uniBTCAmount);
+        IMintableContract(omniBTC).mint(_sender, omniBTCAmount);
 
         emit Minted(_token, _amount);
     }
 
     /**
-     * @dev determine the valid wrapped BTC amount and the corresponding uniBTC amount.
+     * @dev determine the valid wrapped BTC amount and the corresponding omniBTC amount.
      */
     function _amounts(address _token, uint256 _amount) internal view returns (uint256, uint256) {
         uint8 decs = ERC20(_token).decimals();
         if (decs == 8) return (_amount, _amount);
         if (decs == 18) {
-            uint256 uniBTCAmt = _amount / EXCHANGE_RATE_BASE;
-            return (uniBTCAmt * EXCHANGE_RATE_BASE, uniBTCAmt);
+            uint256 omniBTCAmt = _amount / EXCHANGE_RATE_BASE;
+            return (omniBTCAmt * EXCHANGE_RATE_BASE, omniBTCAmt);
         }
         return (0, 0);
     }

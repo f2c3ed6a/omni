@@ -6,7 +6,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20Burnable
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-contract uniBTC is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable, AccessControlUpgradeable {
+contract omniBTC is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable, AccessControlUpgradeable {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
     address public freezeToRecipient;
@@ -17,8 +17,8 @@ contract uniBTC is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable, Ac
         _disableInitializers();
     }
 
-    function initialize(address defaultAdmin, address minter, address[] memory _frozenUsers) public reinitializer(2) {
-        __ERC20_init("uniBTC", "uniBTC");
+    function initialize(address defaultAdmin, address minter, address[] memory _frozenUsers) public initializer {
+        __ERC20_init("omniBTC", "omniBTC");
         __ERC20Burnable_init();
         __AccessControl_init();
 
