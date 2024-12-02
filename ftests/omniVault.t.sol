@@ -33,16 +33,15 @@ contract OmniVaultTest is Test {
         assert(omniVaultInstance.hasRole(omniVaultInstance.DEFAULT_ADMIN_ROLE(), _DEFAULT_ADMIN));
         assert(omniVaultInstance.hasRole(omniVaultInstance.PAUSER_ROLE(), _DEFAULT_ADMIN));
 
-        // prank only works for the *next* call, so read role before pranking
-        bytes32 operatorRole = omniVaultInstance.OPERATOR_ROLE();
-        vm.prank(_DEFAULT_ADMIN);
-        omniVaultInstance.grantRole(operatorRole, _DEFAULT_MINTER);
+        vm.startPrank(_DEFAULT_ADMIN);
+        omniVaultInstance.grantRole(omniVaultInstance.OPERATOR_ROLE(), _DEFAULT_MINTER);
+        vm.stopPrank();
         assert(omniVaultInstance.hasRole(omniVaultInstance.OPERATOR_ROLE(), _DEFAULT_MINTER));
 
-        bytes32 omniBTCMinterRole = omniBTCInstance.MINTER_ROLE();
-        vm.prank(_DEFAULT_ADMIN);
-        omniBTCInstance.grantRole(omniBTCMinterRole, address(omniVaultInstance));
-        assert(omniBTCInstance.hasRole(omniBTCMinterRole, address(omniVaultInstance)));
+        vm.startPrank(_DEFAULT_ADMIN);
+        omniBTCInstance.grantRole(omniBTCInstance.MINTER_ROLE(), address(omniVaultInstance));
+        vm.stopPrank();
+        assert(omniBTCInstance.hasRole(omniBTCInstance.MINTER_ROLE(), address(omniVaultInstance)));
     }
 
     function setUpOmniBTC() public {
@@ -66,20 +65,19 @@ contract OmniVaultTest is Test {
         address[] memory allowedToken = new address[](1);
         allowedToken[0] = address(wbtc);
 
-        vm.prank(_DEFAULT_ADMIN);
+        vm.startPrank(_DEFAULT_ADMIN);
         omniVaultInstance.allowToken(allowedToken);
-
-        vm.prank(_DEFAULT_ADMIN);
         omniVaultInstance.setCap(address(wbtc), 100 * 1e8);
+        vm.stopPrank();
 
         address _alice = address(0x123123);
         wbtc.mint(_alice, 1 * 1e8);
         assertEq(wbtc.balanceOf(_alice), 1 * 1e8);
 
-        vm.prank(_alice);
+        vm.startPrank(_alice);
         wbtc.approve(address(omniVaultInstance), 1 * 1e8);
-        vm.prank(_alice);
         omniVaultInstance.mint(address(wbtc), 1 * 1e8);
+        vm.stopPrank();
 
         assertEq(wbtc.balanceOf(_alice), 0);
         assertEq(omniBTCToken.balanceOf(_alice), 1 * 1e8);

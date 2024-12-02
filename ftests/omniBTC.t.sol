@@ -31,17 +31,19 @@ contract OmniBTCTest is Test {
     }
 
     function testMint() public {
-        vm.prank(_DEFAULT_MINTER);
+        vm.startPrank(_DEFAULT_MINTER);
         omniBTCInstance.mint(_DEFAULT_MINTER, 1);
+        vm.stopPrank();
+
         assertEq(omniBTCInstance.totalSupply(), 1);
+        assertEq(omniBTCInstance.balanceOf(_DEFAULT_MINTER), 1);
     }
 
     function testBurn() public {
-        vm.prank(_DEFAULT_MINTER);
+        vm.startPrank(_DEFAULT_MINTER);
         omniBTCInstance.mint(_DEFAULT_MINTER, 1);
-
-        vm.prank(_DEFAULT_MINTER);
         omniBTCInstance.burn(1);
+        vm.stopPrank();
 
         assertEq(omniBTCInstance.totalSupply(), 0);
     }
@@ -49,11 +51,10 @@ contract OmniBTCTest is Test {
     function testTransfer() public {
         address _alice = address(0xdeadbeef);
 
-        vm.prank(_DEFAULT_MINTER);
+        vm.startPrank(_DEFAULT_MINTER);
         omniBTCInstance.mint(_DEFAULT_MINTER, 1);
-
-        vm.prank(_DEFAULT_MINTER);
         omniBTCInstance.transfer(_alice, 1);
+        vm.stopPrank();
 
         assertEq(omniBTCInstance.balanceOf(_alice), 1);
     }
