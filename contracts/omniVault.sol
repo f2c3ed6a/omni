@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/utils/Address.sol";
 
 import "../interfaces/IMintableContract.sol";
 
-contract VaultWithoutNative is Initializable, AccessControlUpgradeable, ReentrancyGuardUpgradeable {
+contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUpgradeable {
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
 
