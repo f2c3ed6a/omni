@@ -14,23 +14,16 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
 
+    address private constant NATIVE_BTC = address(0xbeDFFfFfFFfFfFfFFfFfFFFFfFFfFFffffFFFFFF);
+    uint256 public constant EXCHANGE_RATE_BASE = 1e10;
+
     using SafeERC20 for IERC20;
     using Address for address;
 
-    address private _DEPRECATED_WBTC_;
     address public omniBTC;
 
     mapping(address => uint256) public caps;
     mapping(address => bool) public paused;
-
-    bool private _DEPRECATED_redeemable_;
-
-    address private constant NATIVE_BTC = address(0xbeDFFfFfFFfFfFfFFfFfFFFFfFFfFFffffFFFFFF);
-    uint8 private constant _DEPRECATED_L2_BTC_DECIMAL_ = 18;
-
-    uint256 public constant EXCHANGE_RATE_BASE = 1e10;
-
-    //================== 2024/09/30 ===========
     mapping(address => bool) public allowedTokenList;
     mapping(address => bool) public allowedTargetList;
     bool public outOfService;
