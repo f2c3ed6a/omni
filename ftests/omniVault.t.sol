@@ -48,7 +48,7 @@ contract OmniVaultTest is Test {
         omniBTC impl = new omniBTC();
 
         bytes memory initializeData =
-            abi.encodeWithSelector(omniBTC.initialize.selector, _DEFAULT_ADMIN, _DEFAULT_MINTER, new address[](0));
+            abi.encodeWithSelector(omniBTC.initialize.selector, _DEFAULT_ADMIN, _DEFAULT_MINTER);
         TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(address(impl), _PROXY_ADMIN, initializeData);
         omniBTCInstance = omniBTC(address(proxy));
 
