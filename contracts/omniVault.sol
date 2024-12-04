@@ -22,6 +22,7 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
 
     address public omniBTC;
 
+    mapping(address => uint256) public tokenUsedCaps;
     mapping(address => uint256) public caps;
     mapping(address => bool) public paused;
     mapping(address => bool) public allowedTokenList;
@@ -185,8 +186,9 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
         (, uint256 omniBTCAmount) = _amounts(_token, _amount);
         require(omniBTCAmount > 0, "USR010");
 
-        uint256 totalSupply = IERC20(_token).totalSupply();
-        require((totalSupply + _amount <= caps[_token]) && caps[_token] != 0, "USR003");
+        uint256 tokenUsedCap = tokenUsedCaps[_token];
+        require((tokenUsedCap + _amount < caps[_token]) && caps[_token] != 0, "USR003");
+        tokenUsedCaps[_token] = tokenUsedCap + _amount;
 
         IERC20(_token).safeTransferFrom(_sender, address(this), _amount);
         IMintableContract(omniBTC).mint(_sender, omniBTCAmount);
