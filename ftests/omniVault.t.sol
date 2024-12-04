@@ -82,4 +82,53 @@ contract OmniVaultTest is Test {
         assertEq(wbtc.balanceOf(_alice), 0);
         assertEq(omniBTCToken.balanceOf(_alice), 1 * 1e8);
     }
+
+    function testTokenNotAllowed() public {
+        WBTC wbtc = new WBTC();
+        IERC20 omniBTCToken = IERC20(omniVaultInstance.omniBTC());
+
+        vm.startPrank(_DEFAULT_ADMIN);
+        // omniVaultInstance.allowToken(allowedToken);
+        omniVaultInstance.setCap(address(wbtc), 100 * 1e8);
+        vm.stopPrank();
+
+        address _alice = address(0x123123);
+        wbtc.mint(_alice, 1 * 1e8);
+        assertEq(wbtc.balanceOf(_alice), 1 * 1e8);
+
+        vm.startPrank(_alice);
+        wbtc.approve(address(omniVaultInstance), 1 * 1e8);
+        vm.expectRevert("SYS002");
+        omniVaultInstance.mint(address(wbtc), 1 * 1e8);
+        vm.stopPrank();
+
+        assertEq(wbtc.balanceOf(_alice), 1 * 1e8);
+        assertEq(omniBTCToken.balanceOf(_alice), 0 * 1e8);
+    }
+
+    function testTokenWithoutCap() public {
+        WBTC wbtc = new WBTC();
+        IERC20 omniBTCToken = IERC20(omniVaultInstance.omniBTC());
+
+        address[] memory allowedToken = new address[](1);
+        allowedToken[0] = address(wbtc);
+
+        vm.startPrank(_DEFAULT_ADMIN);
+        omniVaultInstance.allowToken(allowedToken);
+        // omniVaultInstance.setCap(address(wbtc), 100 * 1e8);
+        vm.stopPrank();
+
+        address _alice = address(0x123123);
+        wbtc.mint(_alice, 1 * 1e8);
+        assertEq(wbtc.balanceOf(_alice), 1 * 1e8);
+
+        vm.startPrank(_alice);
+        wbtc.approve(address(omniVaultInstance), 1 * 1e8);
+        vm.expectRevert("USR003");
+        omniVaultInstance.mint(address(wbtc), 1 * 1e8);
+        vm.stopPrank();
+
+        assertEq(wbtc.balanceOf(_alice), 1 * 1e8);
+        assertEq(omniBTCToken.balanceOf(_alice), 0 * 1e8);
+    }
 }
