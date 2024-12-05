@@ -112,15 +112,4 @@ contract omniBTC is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable, A
             _transfer(_msgSender(), recipients[i], amounts[i]);
         }
     }
-
-    /**
-     * ======================================================================================
-     *
-     * OVERRIDE
-     *
-     * ======================================================================================
-     */
-    function _transfer(address sender, address recipient, uint256 amount) internal override {
-        super._transfer(sender, recipient, amount);
-    }
 }
