@@ -149,8 +149,6 @@ contract OmniVaultTest is Test {
     }
 
     function testMint() public {
-        IERC20 omniBTCToken = IERC20(omniVaultInstance.omniBTC());
-
         address[] memory allowedToken = new address[](2);
         allowedToken[0] = address(utils.MockWBTC8());
         allowedToken[1] = address(utils.MockWBTC18());
@@ -193,6 +191,11 @@ contract OmniVaultTest is Test {
         omniVaultInstance.mint(_wbtc8, 1 * 1e8);
         assertEq(omniBTCInstance.balanceOf(_alice), 8 * 1e8);
 
+        // mint by 0 WBTC, should revert
+        vm.expectRevert("USR010");
+        omniVaultInstance.mint(_wbtc8, 0);
+        assertEq(omniBTCInstance.balanceOf(_alice), 8 * 1e8);
+
         // mint by 1 WBTC10, should revert
         address _wbtc10 = address(utils.MockWBTC10());
         vm.expectRevert("SYS002");
@@ -231,6 +234,195 @@ contract OmniVaultTest is Test {
         assertEq(omniBTCInstance.balanceOf(_alice), 26 * 1e8);
 
         vm.stopPrank();
+    }
+
+    function testOutOfService() public {
+        address[] memory allowedToken = new address[](1);
+        allowedToken[0] = address(utils.MockWBTC8());
+
+        address _pauser = address(0x1000001);
+
+        vm.startPrank(_DEFAULT_ADMIN);
+        omniVaultInstance.allowToken(allowedToken);
+        omniVaultInstance.setCap(address(utils.MockWBTC8()), 100 * 1e8);
+        omniVaultInstance.grantRole(omniVaultInstance.PAUSER_ROLE(), _pauser);
+        vm.stopPrank();
+
+        address _alice = address(0x2123123);
+
+        vm.startPrank(_DEFAULT_MINTER);
+        utils.MockWBTC8().mint(_alice, 100 * 1e8);
+        vm.stopPrank();
+
+        vm.startPrank(_alice);
+        utils.MockWBTC8().approve(address(omniVaultInstance), 100 * 1e8);
+        omniVaultInstance.mint(address(utils.MockWBTC8()), 1 * 1e8);
+        assertEq(omniBTCInstance.balanceOf(_alice), 1 * 1e8);
+        vm.stopPrank();
+
+        vm.startPrank(_pauser);
+        omniVaultInstance.stopService();
+        vm.stopPrank();
+
+        address _wbtc8 = address(utils.MockWBTC8());
+
+        vm.startPrank(_alice);
+        vm.expectRevert("SYS011");
+        omniVaultInstance.mint(_wbtc8, 1 * 1e8);
+        assertEq(omniBTCInstance.balanceOf(_alice), 1 * 1e8);
+        vm.stopPrank();
+
+        vm.startPrank(_pauser);
+        omniVaultInstance.startService();
+        vm.stopPrank();
+
+        vm.startPrank(_alice);
+        omniVaultInstance.mint(_wbtc8, 1 * 1e8);
+        assertEq(omniBTCInstance.balanceOf(_alice), 2 * 1e8);
+        vm.stopPrank();
+    }
+
+    function testPauseToken() public {
+        address[] memory allowedToken = new address[](1);
+        allowedToken[0] = address(utils.MockWBTC8());
+
+        address _pauser = address(0x1000001);
+
+        vm.startPrank(_DEFAULT_ADMIN);
+        omniVaultInstance.allowToken(allowedToken);
+        omniVaultInstance.setCap(address(utils.MockWBTC8()), 100 * 1e8);
+        omniVaultInstance.grantRole(omniVaultInstance.PAUSER_ROLE(), _pauser);
+        vm.stopPrank();
+
+        address _alice = address(0xaabb);
+
+        vm.startPrank(_DEFAULT_MINTER);
+        utils.MockWBTC8().mint(_alice, 100 * 1e8);
+        vm.stopPrank();
+
+        vm.startPrank(_alice);
+        utils.MockWBTC8().approve(address(omniVaultInstance), 100 * 1e8);
+        omniVaultInstance.mint(address(utils.MockWBTC8()), 1 * 1e8);
+        assertEq(omniBTCInstance.balanceOf(_alice), 1 * 1e8);
+        vm.stopPrank();
+
+        vm.startPrank(_pauser);
+        omniVaultInstance.pauseToken(allowedToken);
+        vm.stopPrank();
+
+        address _wbtc8 = address(utils.MockWBTC8());
+
+        vm.startPrank(_alice);
+        vm.expectRevert("SYS002");
+        omniVaultInstance.mint(_wbtc8, 1 * 1e8);
+        assertEq(omniBTCInstance.balanceOf(_alice), 1 * 1e8);
+        vm.stopPrank();
+
+        vm.startPrank(_pauser);
+        omniVaultInstance.unpauseToken(allowedToken);
+        vm.stopPrank();
+
+        vm.startPrank(_alice);
+        omniVaultInstance.mint(_wbtc8, 1 * 1e8);
+        assertEq(omniBTCInstance.balanceOf(_alice), 2 * 1e8);
+        vm.stopPrank();
+    }
+
+    function testDenyToken() public {
+        address[] memory allowedToken = new address[](1);
+        allowedToken[0] = address(utils.MockWBTC8());
+
+        vm.startPrank(_DEFAULT_ADMIN);
+        omniVaultInstance.allowToken(allowedToken);
+        omniVaultInstance.setCap(address(utils.MockWBTC8()), 100 * 1e8);
+        vm.stopPrank();
+
+        address _alice = address(0xaabbccdd);
+
+        vm.startPrank(_DEFAULT_MINTER);
+        utils.MockWBTC8().mint(_alice, 100 * 1e8);
+        vm.stopPrank();
+
+        vm.startPrank(_alice);
+        utils.MockWBTC8().approve(address(omniVaultInstance), 100 * 1e8);
+        omniVaultInstance.mint(address(utils.MockWBTC8()), 1 * 1e8);
+        assertEq(omniBTCInstance.balanceOf(_alice), 1 * 1e8);
+        vm.stopPrank();
+
+        vm.startPrank(_DEFAULT_ADMIN);
+        omniVaultInstance.denyToken(allowedToken);
+        vm.stopPrank();
+
+        address _wbtc8 = address(utils.MockWBTC8());
+
+        vm.startPrank(_alice);
+        vm.expectRevert("SYS002");
+        omniVaultInstance.mint(_wbtc8, 1 * 1e8);
+        assertEq(omniBTCInstance.balanceOf(_alice), 1 * 1e8);
+        vm.stopPrank();
+
+        vm.startPrank(_DEFAULT_ADMIN);
+        omniVaultInstance.allowToken(allowedToken);
+        vm.stopPrank();
+
+        vm.startPrank(_alice);
+        omniVaultInstance.mint(_wbtc8, 1 * 1e8);
+        assertEq(omniBTCInstance.balanceOf(_alice), 2 * 1e8);
+        vm.stopPrank();
+    }
+
+    function testExecuteTarget() public {
+        address[] memory allowedToken = new address[](1);
+        allowedToken[0] = address(utils.MockWBTC8());
+
+        address _operator = address(0x1000002);
+
+        vm.startPrank(_DEFAULT_ADMIN);
+        omniVaultInstance.allowToken(allowedToken);
+        omniVaultInstance.setCap(address(utils.MockWBTC8()), 100 * 1e8);
+        omniVaultInstance.grantRole(omniVaultInstance.OPERATOR_ROLE(), _operator);
+        vm.stopPrank();
+
+        address _alice = address(0x1111);
+
+        vm.startPrank(_DEFAULT_MINTER);
+        utils.MockWBTC8().mint(_alice, 100 * 1e8);
+        vm.stopPrank();
+
+        vm.startPrank(_alice);
+        utils.MockWBTC8().approve(address(omniVaultInstance), 100 * 1e8);
+        omniVaultInstance.mint(address(utils.MockWBTC8()), 2 * 1e8);
+        assertEq(omniBTCInstance.balanceOf(_alice), 2 * 1e8);
+        omniBTCInstance.transfer(address(omniVaultInstance), 2 * 1e8);
+        assertEq(omniBTCInstance.balanceOf(_alice), 0);
+        assertEq(omniBTCInstance.balanceOf(address(omniVaultInstance)), 2 * 1e8);
+        vm.stopPrank();
+
+        address[] memory allowedTarget = new address[](1);
+        allowedTarget[0] = address(omniBTCInstance);
+
+        vm.startPrank(_DEFAULT_ADMIN);
+        omniVaultInstance.allowTarget(allowedTarget);
+        vm.stopPrank();
+
+        bytes memory _calldata = abi.encodeWithSelector(IERC20.transfer.selector, address(_alice), 1 * 1e8);
+
+        vm.startPrank(_operator);
+        omniVaultInstance.execute(address(omniBTCInstance), _calldata, 0);
+        vm.stopPrank();
+        assertEq(omniBTCInstance.balanceOf(_alice), 1 * 1e8);
+        assertEq(omniBTCInstance.balanceOf(address(omniVaultInstance)), 1 * 1e8);
+
+        vm.startPrank(_DEFAULT_ADMIN);
+        omniVaultInstance.denyTarget(allowedTarget);
+        vm.stopPrank();
+
+        vm.startPrank(_operator);
+        vm.expectRevert("SYS001");
+        omniVaultInstance.execute(address(omniBTCInstance), _calldata, 0);
+        vm.stopPrank();
+        assertEq(omniBTCInstance.balanceOf(_alice), 1 * 1e8);
+        assertEq(omniBTCInstance.balanceOf(address(omniVaultInstance)), 1 * 1e8);
     }
 }
 
