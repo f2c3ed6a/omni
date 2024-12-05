@@ -58,13 +58,6 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
     bool public outOfService;
 
     /**
-     * @notice Disallow users to send native tokens to this contract.
-     */
-    receive() external payable {
-        revert();
-    }
-
-    /**
      * ======================================================================================
      *
      * CONSTRUCTOR
