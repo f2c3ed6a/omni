@@ -18,11 +18,6 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
 
     /**
-     * @notice The address of the native BTC token.
-     */
-    address private constant NATIVE_BTC = address(0xbeDFFfFfFFfFfFfFFfFfFFFFfFFfFFffffFFFFFF);
-
-    /**
      * @notice The base exchange rate for tokens with 18 decimals.
      */
     uint256 public constant EXCHANGE_RATE_BASE = 1e10;
@@ -63,9 +58,11 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
     bool public outOfService;
 
     /**
-     * @notice Allow users to send native tokens to this contract.
+     * @notice Disallow users to send native tokens to this contract.
      */
-    receive() external payable {}
+    receive() external payable {
+        revert();
+    }
 
     /**
      * ======================================================================================
@@ -173,7 +170,6 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
      * @param _cap The cap for the token.
      */
     function setCap(address _token, uint256 _cap) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(_token != NATIVE_BTC, "SYS012");
         require(_token != address(0x0), "SYS003");
         require(_cap > 0, "USR017");
 
