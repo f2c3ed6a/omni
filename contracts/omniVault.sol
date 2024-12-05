@@ -11,54 +11,91 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "../interfaces/IMintableContract.sol";
 
 contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUpgradeable {
-    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
-    bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
-
-    address private constant NATIVE_BTC = address(0xbeDFFfFfFFfFfFfFFfFfFFFFfFFfFFffffFFFFFF);
-    uint256 public constant EXCHANGE_RATE_BASE = 1e10;
-
     using SafeERC20 for IERC20;
     using Address for address;
 
+    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
+    bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
+
+    /**
+     * @notice The address of the native BTC token.
+     */
+    address private constant NATIVE_BTC = address(0xbeDFFfFfFFfFfFfFFfFfFFFFfFFfFFffffFFFFFF);
+
+    /**
+     * @notice The base exchange rate for tokens with 18 decimals.
+     */
+    uint256 public constant EXCHANGE_RATE_BASE = 1e10;
+
+    /**
+     * @notice The address of the ERC20 omniBTC token.
+     */
     address public omniBTC;
 
+    /**
+     * @notice Mapping to store the used cap for each type of wrapped BTC.
+     */
     mapping(address => uint256) public tokenUsedCaps;
+
+    /**
+     * @notice Mapping to store the cap for each type of wrapped BTC.
+     */
     mapping(address => uint256) public caps;
+
+    /**
+     * @notice Mapping to store the paused status for each type of wrapped BTC.
+     */
     mapping(address => bool) public paused;
+
+    /**
+     * @notice Mapping to store the allowed status for each type of wrapped BTC.
+     */
     mapping(address => bool) public allowedTokenList;
+
+    /**
+     * @notice Mapping to store the allowed status for each target address.
+     */
     mapping(address => bool) public allowedTargetList;
+
+    /**
+     * @notice The out of service status.
+     */
     bool public outOfService;
 
+    /**
+     * @notice Allow users to send native tokens to this contract.
+     */
     receive() external payable {}
 
-    /// @custom:oz-upgrades-unsafe-allow constructor
+    /**
+     * ======================================================================================
+     *
+     * CONSTRUCTOR
+     *
+     * ======================================================================================
+     */
+
+    /**
+     * @notice Disables the ability to call any additional initializer functions.
+     */
     constructor() {
         _disableInitializers();
     }
 
+    /**
+     * ======================================================================================
+     *
+     * MODIFIERS
+     *
+     * ======================================================================================
+     */
+
+    /**
+     * @notice Modifier to check if the service is normal.
+     */
     modifier serviceNormal() {
         require(!outOfService, "SYS011");
         _;
-    }
-
-    /**
-     * @dev mint omniBTC with the given type of wrapped BTC
-     */
-    function mint(address _token, uint256 _amount) external serviceNormal {
-        require(allowedTokenList[_token] && !paused[_token], "SYS002");
-        _mint(msg.sender, _token, _amount);
-    }
-
-    // @dev execute a contract call that also transfers '_value' wei to '_target'
-    function execute(address _target, bytes memory _data, uint256 _value)
-        external
-        nonReentrant
-        onlyRole(OPERATOR_ROLE)
-        serviceNormal
-        returns (bytes memory)
-    {
-        require(allowedTargetList[_target], "SYS001");
-        return _target.functionCallWithValue(_data, _value);
     }
 
     /**
@@ -67,6 +104,12 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
      * ADMIN
      *
      * ======================================================================================
+     */
+
+    /**
+     * @notice Initializes the contract with admin and token settings.
+     * @param _defaultAdmin The default admin address (RBAC).
+     * @param _omniBTC The address of the omniBTC token.
      */
     function initialize(address _defaultAdmin, address _omniBTC) public initializer {
         __AccessControl_init();
@@ -81,27 +124,30 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
     }
 
     /**
-     * @dev allow the minting of a token
+     * @notice Allow token to mint omniBTC.
+     * @param _tokens The address of the token.
      */
-    function allowToken(address[] memory _token) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        for (uint256 i = 0; i < _token.length; i++) {
-            allowedTokenList[_token[i]] = true;
+    function allowToken(address[] memory _tokens) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        for (uint256 i = 0; i < _tokens.length; i++) {
+            allowedTokenList[_tokens[i]] = true;
         }
-        emit TokenAllowed(_token);
+        emit TokenAllowed(_tokens);
     }
 
     /**
-     * @dev deny the minting of a token
+     * @notice Deny token to mint omniBTC.
+     * @param _tokens The address of the token.
      */
-    function denyToken(address[] memory _token) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        for (uint256 i = 0; i < _token.length; i++) {
-            allowedTokenList[_token[i]] = false;
+    function denyToken(address[] memory _tokens) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        for (uint256 i = 0; i < _tokens.length; i++) {
+            allowedTokenList[_tokens[i]] = false;
         }
-        emit TokenDenied(_token);
+        emit TokenDenied(_tokens);
     }
 
     /**
-     * @dev allow the target address
+     * @notice Allow target which can be called by this contract.
+     * @param _targets The address of the target.
      */
     function allowTarget(address[] memory _targets) external onlyRole(DEFAULT_ADMIN_ROLE) {
         for (uint256 i = 0; i < _targets.length; i++) {
@@ -111,7 +157,8 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
     }
 
     /**
-     * @dev deny the target address
+     * @notice Deny target which can be called by this contract.
+     * @param _targets The address of the target.
      */
     function denyTarget(address[] memory _targets) external onlyRole(DEFAULT_ADMIN_ROLE) {
         for (uint256 i = 0; i < _targets.length; i++) {
@@ -121,43 +168,9 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
     }
 
     /**
-     * @dev a pauser pause the minting of a token
-     */
-    function pauseToken(address[] memory _tokens) external onlyRole(PAUSER_ROLE) {
-        for (uint256 i = 0; i < _tokens.length; i++) {
-            paused[_tokens[i]] = true;
-        }
-        emit TokenPaused(_tokens);
-    }
-
-    /**
-     * @dev a pauser unpause the minting of a token
-     */
-    function unpauseToken(address[] memory _tokens) external onlyRole(PAUSER_ROLE) {
-        for (uint256 i = 0; i < _tokens.length; i++) {
-            paused[_tokens[i]] = false;
-        }
-        emit TokenUnpaused(_tokens);
-    }
-
-    /**
-     * @dev START ALL SERVICE
-     */
-    function startService() external onlyRole(PAUSER_ROLE) {
-        outOfService = false;
-        emit StartService();
-    }
-
-    /**
-     * @dev STOP ALL SERVICE
-     */
-    function stopService() external onlyRole(PAUSER_ROLE) {
-        outOfService = true;
-        emit StopService();
-    }
-
-    /**
-     * @dev set cap for a specific type of wrapped BTC
+     * @notice Set the cap for each type of wrapped BTC.
+     * @param _token The address of the token.
+     * @param _cap The cap for the token.
      */
     function setCap(address _token, uint256 _cap) external onlyRole(DEFAULT_ADMIN_ROLE) {
         require(_token != NATIVE_BTC, "SYS012");
@@ -174,13 +187,105 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
     /**
      * ======================================================================================
      *
-     * INTERNAL
+     * PAUSER
      *
      * ======================================================================================
      */
 
     /**
-     * @dev mint omniBTC with wrapped BTC tokens
+     * @notice Pause token to mint omniBTC.
+     * @param _tokens The address of the token.
+     */
+    function pauseToken(address[] memory _tokens) external onlyRole(PAUSER_ROLE) {
+        for (uint256 i = 0; i < _tokens.length; i++) {
+            paused[_tokens[i]] = true;
+        }
+        emit TokenPaused(_tokens);
+    }
+
+    /**
+     * @notice Unpause token to mint omniBTC.
+     * @param _tokens The address of the token.
+     */
+    function unpauseToken(address[] memory _tokens) external onlyRole(PAUSER_ROLE) {
+        for (uint256 i = 0; i < _tokens.length; i++) {
+            paused[_tokens[i]] = false;
+        }
+        emit TokenUnpaused(_tokens);
+    }
+
+    /**
+     * @notice Start all service.
+     */
+    function startService() external onlyRole(PAUSER_ROLE) {
+        outOfService = false;
+        emit StartService();
+    }
+
+    /**
+     * @notice Stop all service.
+     */
+    function stopService() external onlyRole(PAUSER_ROLE) {
+        outOfService = true;
+        emit StopService();
+    }
+
+    /**
+     * ======================================================================================
+     *
+     * OPERATOR
+     *
+     * ======================================================================================
+     */
+
+    /**
+     * @notice Execute a contract call that also transfers '_value' wei to '_target'.
+     * @param _target The address of the target contract.
+     * @param _data The data to be executed.
+     * @param _value The value to be sent.
+     */
+    function execute(address _target, bytes memory _data, uint256 _value)
+        external
+        nonReentrant
+        onlyRole(OPERATOR_ROLE)
+        serviceNormal
+        returns (bytes memory)
+    {
+        require(allowedTargetList[_target], "SYS001");
+        return _target.functionCallWithValue(_data, _value);
+    }
+
+    /**
+     * ======================================================================================
+     *
+     * USER INTERACTION
+     *
+     * ======================================================================================
+     */
+
+    /**
+     * @notice Mint omniBTC by sending token to this contract.
+     * @param _token The address of the token.
+     * @param _amount The amount of token to mint.
+     */
+    function mint(address _token, uint256 _amount) external serviceNormal {
+        require(allowedTokenList[_token] && !paused[_token], "SYS002");
+        _mint(msg.sender, _token, _amount);
+    }
+
+    /**
+     * ======================================================================================
+     *
+     * INTERNAL FUNCTIONS
+     *
+     * ======================================================================================
+     */
+
+    /**
+     * @notice Mint omniBTC by sending token to this contract. internal only.
+     * @param _sender The address of the sender.
+     * @param _token The address of the token.
+     * @param _amount The amount of token to mint.
      */
     function _mint(address _sender, address _token, uint256 _amount) internal {
         (, uint256 omniBTCAmount) = _amounts(_token, _amount);
@@ -197,7 +302,9 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
     }
 
     /**
-     * @dev determine the valid wrapped BTC amount and the corresponding omniBTC amount.
+     * @notice Convert the amount to omniBTC amount.
+     * @param _token The address of the token.
+     * @param _amount The amount of token.
      */
     function _amounts(address _token, uint256 _amount) internal view returns (uint256, uint256) {
         uint8 decs = ERC20(_token).decimals();
@@ -216,13 +323,49 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
      *
      * ======================================================================================
      */
+
+    /**
+     * @notice Event emitted when omniBTC is minted.
+     */
     event Minted(address token, uint256 amount);
+
+    /**
+     * @notice Event emitted when tokens are added to the paused token list.
+     */
     event TokenPaused(address[] token);
+
+    /**
+     * @notice Event emitted when tokens are removed from the paused token list.
+     */
     event TokenUnpaused(address[] token);
+
+    /**
+     * @notice Event emitted when tokens are added to the allowed token list.
+     */
     event TokenAllowed(address[] token);
+
+    /**
+     * @notice Event emitted when tokens are removed from the allowed token list.
+     */
     event TokenDenied(address[] token);
+
+    /**
+     * @notice Event emitted when targets are added to the allowed target list.
+     */
     event TargetAllowed(address[] token);
+
+    /**
+     * @notice Event emitted when targets are removed from the allowed target list.
+     */
     event TargetDenied(address[] token);
+
+    /**
+     * @notice Event emitted when the service is started.
+     */
     event StartService();
+
+    /**
+     * @notice Event emitted when the service is stopped.
+     */
     event StopService();
 }
