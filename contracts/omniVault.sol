@@ -18,9 +18,9 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
 
     /**
-     * @notice The base exchange rate for tokens with 18 decimals.
+     * @notice The precision when converting token with 18 decimals to 8 decimals.
      */
-    uint256 public constant EXCHANGE_RATE_BASE = 1e10;
+    uint256 public constant DECIMAL_PRECISION18 = 1e10;
 
     /**
      * @notice The address of the ERC20 omniBTC token.
@@ -298,7 +298,7 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
     function _amounts(address _token, uint256 _amount) internal view returns (uint256) {
         uint8 decs = ERC20(_token).decimals();
         if (decs == 8) return _amount;
-        if (decs == 18) return _amount / EXCHANGE_RATE_BASE;
+        if (decs == 18) return _amount / DECIMAL_PRECISION18;
         return 0;
     }
 
