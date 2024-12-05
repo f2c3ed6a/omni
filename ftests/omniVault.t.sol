@@ -424,10 +424,42 @@ contract OmniVaultTest is Test {
         assertEq(omniBTCInstance.balanceOf(_alice), 1 * 1e8);
         assertEq(omniBTCInstance.balanceOf(address(omniVaultInstance)), 1 * 1e8);
     }
+
+    function testDecimal() public {
+        address[] memory allowedToken = new address[](1);
+        allowedToken[0] = address(utils.MockDecimalToken8());
+
+        vm.startPrank(_DEFAULT_ADMIN);
+        omniVaultInstance.allowToken(allowedToken);
+        omniVaultInstance.setCap(address(utils.MockDecimalToken8()), 100 * 1e8);
+        vm.stopPrank();
+
+        address _alice = address(0xdeadbeefaa);
+        utils.MockDecimalToken8().mint(_alice, 100 * 1e8);
+
+        vm.startPrank(_alice);
+        utils.MockDecimalToken8().approve(address(omniVaultInstance), 100 * 1e8);
+        omniVaultInstance.mint(address(utils.MockDecimalToken8()), 1 * 1e8);
+        assertEq(omniBTCInstance.balanceOf(_alice), 1 * 1e8);
+        vm.stopPrank();
+
+        IResetDecimal(address(utils.MockDecimalToken8())).resetDecimals(10);
+
+        vm.startPrank(_alice);
+        address _tk = address(utils.MockDecimalToken8());
+        vm.expectRevert("USR010");
+        omniVaultInstance.mint(_tk, 1 * 1e8);
+        assertEq(omniBTCInstance.balanceOf(_alice), 1 * 1e8);
+        vm.stopPrank();
+    }
 }
 
 interface IMintableToken is IERC20 {
     function mint(address to, uint256 amount) external;
+}
+
+interface IResetDecimal {
+    function resetDecimals(uint8 _decimals) external;
 }
 
 contract Utils {
@@ -468,5 +500,9 @@ contract DecimalToken is ERC20, IMintableToken {
 
     function mint(address to, uint256 amount) public {
         _mint(to, amount);
+    }
+
+    function resetDecimals(uint8 _decimals) public {
+        customDecimals = _decimals;
     }
 }
