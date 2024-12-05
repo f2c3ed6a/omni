@@ -117,7 +117,7 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
      * @notice Allow token to mint omniBTC.
      * @param _tokens The address of the token.
      */
-    function allowToken(address[] memory _tokens) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function allowToken(address[] calldata _tokens) external onlyRole(DEFAULT_ADMIN_ROLE) {
         for (uint256 i = 0; i < _tokens.length; i++) {
             allowedTokens[_tokens[i]] = true;
         }
@@ -128,7 +128,7 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
      * @notice Deny token to mint omniBTC.
      * @param _tokens The address of the token.
      */
-    function denyToken(address[] memory _tokens) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function denyToken(address[] calldata _tokens) external onlyRole(DEFAULT_ADMIN_ROLE) {
         for (uint256 i = 0; i < _tokens.length; i++) {
             allowedTokens[_tokens[i]] = false;
         }
@@ -139,7 +139,7 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
      * @notice Allow target which can be called by this contract.
      * @param _targets The address of the target.
      */
-    function allowTarget(address[] memory _targets) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function allowTarget(address[] calldata _targets) external onlyRole(DEFAULT_ADMIN_ROLE) {
         for (uint256 i = 0; i < _targets.length; i++) {
             allowedTargets[_targets[i]] = true;
         }
@@ -150,7 +150,7 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
      * @notice Deny target which can be called by this contract.
      * @param _targets The address of the target.
      */
-    function denyTarget(address[] memory _targets) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function denyTarget(address[] calldata _targets) external onlyRole(DEFAULT_ADMIN_ROLE) {
         for (uint256 i = 0; i < _targets.length; i++) {
             allowedTargets[_targets[i]] = false;
         }
@@ -185,7 +185,7 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
      * @notice Pause token to mint omniBTC.
      * @param _tokens The address of the token.
      */
-    function pauseToken(address[] memory _tokens) external onlyRole(PAUSER_ROLE) {
+    function pauseToken(address[] calldata _tokens) external onlyRole(PAUSER_ROLE) {
         for (uint256 i = 0; i < _tokens.length; i++) {
             pausedTokens[_tokens[i]] = true;
         }
@@ -196,7 +196,7 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
      * @notice Unpause token to mint omniBTC.
      * @param _tokens The address of the token.
      */
-    function unpauseToken(address[] memory _tokens) external onlyRole(PAUSER_ROLE) {
+    function unpauseToken(address[] calldata _tokens) external onlyRole(PAUSER_ROLE) {
         for (uint256 i = 0; i < _tokens.length; i++) {
             pausedTokens[_tokens[i]] = false;
         }
@@ -277,11 +277,11 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
      * @param _amount The amount of token to mint.
      */
     function _mint(address _sender, address _token, uint256 _amount) internal {
-        (, uint256 omniBTCAmount) = _amounts(_token, _amount);
+        uint256 omniBTCAmount = _amounts(_token, _amount);
         require(omniBTCAmount > 0, "USR010");
 
         uint256 tokenUsedCap = tokenUsedCaps[_token];
-        require((tokenUsedCap + _amount < tokenCaps[_token]) && tokenCaps[_token] != 0, "USR003");
+        require((tokenUsedCap + _amount < tokenCaps[_token]), "USR003");
         tokenUsedCaps[_token] = tokenUsedCap + _amount;
 
         IERC20(_token).safeTransferFrom(_sender, address(this), _amount);
@@ -295,14 +295,11 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
      * @param _token The address of the token.
      * @param _amount The amount of token.
      */
-    function _amounts(address _token, uint256 _amount) internal view returns (uint256, uint256) {
+    function _amounts(address _token, uint256 _amount) internal view returns (uint256) {
         uint8 decs = ERC20(_token).decimals();
-        if (decs == 8) return (_amount, _amount);
-        if (decs == 18) {
-            uint256 omniBTCAmt = _amount / EXCHANGE_RATE_BASE;
-            return (omniBTCAmt * EXCHANGE_RATE_BASE, omniBTCAmt);
-        }
-        return (0, 0);
+        if (decs == 8) return _amount;
+        if (decs == 18) return _amount / EXCHANGE_RATE_BASE;
+        return 0;
     }
 
     /**
