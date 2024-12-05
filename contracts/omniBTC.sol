@@ -55,8 +55,6 @@ contract omniBTC is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable, A
 
         _grantRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
         _grantRole(MINTER_ROLE, _minter);
-
-        _mint(msg.sender, 10);
     }
 
     /**
