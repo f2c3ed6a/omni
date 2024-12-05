@@ -99,6 +99,7 @@ contract omniBTC is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable, A
      *
      * ======================================================================================
      */
+
     /**
      * @notice Batch transfer amount to recipients.
      * @param recipients The addresses of the recipients.

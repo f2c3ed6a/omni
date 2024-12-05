@@ -40,22 +40,22 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
     /**
      * @notice Mapping to store the cap for each type of wrapped BTC.
      */
-    mapping(address => uint256) public caps;
+    mapping(address => uint256) public tokenCaps;
 
     /**
      * @notice Mapping to store the paused status for each type of wrapped BTC.
      */
-    mapping(address => bool) public paused;
+    mapping(address => bool) public pausedTokens;
 
     /**
      * @notice Mapping to store the allowed status for each type of wrapped BTC.
      */
-    mapping(address => bool) public allowedTokenList;
+    mapping(address => bool) public allowedTokens;
 
     /**
      * @notice Mapping to store the allowed status for each target address.
      */
-    mapping(address => bool) public allowedTargetList;
+    mapping(address => bool) public allowedTargets;
 
     /**
      * @notice The out of service status.
@@ -129,7 +129,7 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
      */
     function allowToken(address[] memory _tokens) external onlyRole(DEFAULT_ADMIN_ROLE) {
         for (uint256 i = 0; i < _tokens.length; i++) {
-            allowedTokenList[_tokens[i]] = true;
+            allowedTokens[_tokens[i]] = true;
         }
         emit TokenAllowed(_tokens);
     }
@@ -140,7 +140,7 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
      */
     function denyToken(address[] memory _tokens) external onlyRole(DEFAULT_ADMIN_ROLE) {
         for (uint256 i = 0; i < _tokens.length; i++) {
-            allowedTokenList[_tokens[i]] = false;
+            allowedTokens[_tokens[i]] = false;
         }
         emit TokenDenied(_tokens);
     }
@@ -151,7 +151,7 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
      */
     function allowTarget(address[] memory _targets) external onlyRole(DEFAULT_ADMIN_ROLE) {
         for (uint256 i = 0; i < _targets.length; i++) {
-            allowedTargetList[_targets[i]] = true;
+            allowedTargets[_targets[i]] = true;
         }
         emit TargetAllowed(_targets);
     }
@@ -162,7 +162,7 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
      */
     function denyTarget(address[] memory _targets) external onlyRole(DEFAULT_ADMIN_ROLE) {
         for (uint256 i = 0; i < _targets.length; i++) {
-            allowedTargetList[_targets[i]] = false;
+            allowedTargets[_targets[i]] = false;
         }
         emit TargetDenied(_targets);
     }
@@ -181,7 +181,7 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
 
         require(decs == 8 || decs == 18, "SYS004");
 
-        caps[_token] = _cap;
+        tokenCaps[_token] = _cap;
     }
 
     /**
@@ -198,7 +198,7 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
      */
     function pauseToken(address[] memory _tokens) external onlyRole(PAUSER_ROLE) {
         for (uint256 i = 0; i < _tokens.length; i++) {
-            paused[_tokens[i]] = true;
+            pausedTokens[_tokens[i]] = true;
         }
         emit TokenPaused(_tokens);
     }
@@ -209,7 +209,7 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
      */
     function unpauseToken(address[] memory _tokens) external onlyRole(PAUSER_ROLE) {
         for (uint256 i = 0; i < _tokens.length; i++) {
-            paused[_tokens[i]] = false;
+            pausedTokens[_tokens[i]] = false;
         }
         emit TokenUnpaused(_tokens);
     }
@@ -251,7 +251,7 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
         serviceNormal
         returns (bytes memory)
     {
-        require(allowedTargetList[_target], "SYS001");
+        require(allowedTargets[_target], "SYS001");
         return _target.functionCallWithValue(_data, _value);
     }
 
@@ -269,7 +269,7 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
      * @param _amount The amount of token to mint.
      */
     function mint(address _token, uint256 _amount) external serviceNormal {
-        require(allowedTokenList[_token] && !paused[_token], "SYS002");
+        require(allowedTokens[_token] && !pausedTokens[_token], "SYS002");
         _mint(msg.sender, _token, _amount);
     }
 
@@ -292,7 +292,7 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
         require(omniBTCAmount > 0, "USR010");
 
         uint256 tokenUsedCap = tokenUsedCaps[_token];
-        require((tokenUsedCap + _amount < caps[_token]) && caps[_token] != 0, "USR003");
+        require((tokenUsedCap + _amount < tokenCaps[_token]) && tokenCaps[_token] != 0, "USR003");
         tokenUsedCaps[_token] = tokenUsedCap + _amount;
 
         IERC20(_token).safeTransferFrom(_sender, address(this), _amount);
