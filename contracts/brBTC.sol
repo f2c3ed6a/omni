@@ -6,7 +6,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20Burnable
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-contract omniBTC is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable, AccessControlUpgradeable {
+contract brBTC is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable, AccessControlUpgradeable {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
     /**
@@ -46,10 +46,10 @@ contract omniBTC is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable, A
     /**
      * @notice Initializes the contract with admin and token settings.
      * @param _defaultAdmin The default admin address (RBAC).
-     * @param _minter The address of the omniBTC minter.
+     * @param _minter The address of the brBTC minter.
      */
     function initialize(address _defaultAdmin, address _minter) public initializer {
-        __ERC20_init("omniBTC", "omniBTC");
+        __ERC20_init("brBTC", "brBTC");
         __ERC20Burnable_init();
         __AccessControl_init();
 
@@ -66,26 +66,26 @@ contract omniBTC is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable, A
      */
 
     /**
-     * @notice Mints omniBTC to the specified address.
-     * @param to The omniBTC will be minted to this address.
-     * @param amount The amount of omniBTC to mint.
+     * @notice Mints brBTC to the specified address.
+     * @param to The brBTC will be minted to this address.
+     * @param amount The amount of brBTC to mint.
      */
     function mint(address to, uint256 amount) public onlyRole(MINTER_ROLE) {
         _mint(to, amount);
     }
 
     /**
-     * @notice Burns omniBTC.
-     * @param amount The amount of omniBTC to burn.
+     * @notice Burns brBTC.
+     * @param amount The amount of brBTC to burn.
      */
     function burn(uint256 amount) public override onlyRole(MINTER_ROLE) {
         _burn(_msgSender(), amount);
     }
 
     /**
-     * @notice Burns omniBTC from the specified address.
+     * @notice Burns brBTC from the specified address.
      * @param account The address of the account to burn from.
-     * @param amount The amount of omniBTC to burn.
+     * @param amount The amount of brBTC to burn.
      */
     function burnFrom(address account, uint256 amount) public override onlyRole(MINTER_ROLE) {
         _spendAllowance(account, _msgSender(), amount);

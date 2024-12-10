@@ -8,74 +8,73 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
-import {omniBTC} from "../contracts/omniBTC.sol";
-import {omniVault} from "../contracts/omniVault.sol";
+import {brBTC} from "../contracts/brBTC.sol";
+import {brVault} from "../contracts/brVault.sol";
 import {WBTC} from "../contracts/mocks/WBTC.sol";
 import {WBTC18} from "../contracts/mocks/WBTC18.sol";
 
-contract OmniVaultTest is Test {
+contract brVaultTest is Test {
     address private constant _PROXY_ADMIN = address(0x1);
     address private constant _DEFAULT_ADMIN = address(0x2);
     address private constant _DEFAULT_MINTER = address(0x3);
 
     Utils public utils;
-    omniBTC public omniBTCInstance;
-    omniVault public omniVaultInstance;
+    brBTC public brBTCInstance;
+    brVault public brVaultInstance;
 
     function setUp() public {
         utils = new Utils();
         utils.setUp(_DEFAULT_MINTER);
 
-        setUpOmniBTC();
-        setUpOmniVault();
+        setUpbrBTC();
+        setUpbrVault();
     }
 
-    function setUpOmniVault() public {
-        omniVault impl = new omniVault();
+    function setUpbrVault() public {
+        brVault impl = new brVault();
 
         bytes memory initializeData =
-            abi.encodeWithSelector(omniVault.initialize.selector, _DEFAULT_ADMIN, address(omniBTCInstance));
+            abi.encodeWithSelector(brVault.initialize.selector, _DEFAULT_ADMIN, address(brBTCInstance));
         TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(address(impl), _PROXY_ADMIN, initializeData);
-        omniVaultInstance = omniVault(payable(address(proxy)));
+        brVaultInstance = brVault(payable(address(proxy)));
 
-        assert(omniVaultInstance.hasRole(omniVaultInstance.DEFAULT_ADMIN_ROLE(), _DEFAULT_ADMIN));
-        assert(omniVaultInstance.hasRole(omniVaultInstance.PAUSER_ROLE(), _DEFAULT_ADMIN));
-
-        vm.startPrank(_DEFAULT_ADMIN);
-        omniVaultInstance.grantRole(omniVaultInstance.OPERATOR_ROLE(), _DEFAULT_MINTER);
-        vm.stopPrank();
-        assert(omniVaultInstance.hasRole(omniVaultInstance.OPERATOR_ROLE(), _DEFAULT_MINTER));
+        assert(brVaultInstance.hasRole(brVaultInstance.DEFAULT_ADMIN_ROLE(), _DEFAULT_ADMIN));
+        assert(brVaultInstance.hasRole(brVaultInstance.PAUSER_ROLE(), _DEFAULT_ADMIN));
 
         vm.startPrank(_DEFAULT_ADMIN);
-        omniBTCInstance.grantRole(omniBTCInstance.MINTER_ROLE(), address(omniVaultInstance));
+        brVaultInstance.grantRole(brVaultInstance.OPERATOR_ROLE(), _DEFAULT_MINTER);
         vm.stopPrank();
-        assert(omniBTCInstance.hasRole(omniBTCInstance.MINTER_ROLE(), address(omniVaultInstance)));
+        assert(brVaultInstance.hasRole(brVaultInstance.OPERATOR_ROLE(), _DEFAULT_MINTER));
+
+        vm.startPrank(_DEFAULT_ADMIN);
+        brBTCInstance.grantRole(brBTCInstance.MINTER_ROLE(), address(brVaultInstance));
+        vm.stopPrank();
+        assert(brBTCInstance.hasRole(brBTCInstance.MINTER_ROLE(), address(brVaultInstance)));
     }
 
-    function setUpOmniBTC() public {
-        omniBTC impl = new omniBTC();
+    function setUpbrBTC() public {
+        brBTC impl = new brBTC();
 
-        bytes memory initializeData =
-            abi.encodeWithSelector(omniBTC.initialize.selector, _DEFAULT_ADMIN, _DEFAULT_MINTER);
+        bytes memory initializeData = abi.encodeWithSelector(brBTC.initialize.selector, _DEFAULT_ADMIN, _DEFAULT_MINTER);
         TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(address(impl), _PROXY_ADMIN, initializeData);
-        omniBTCInstance = omniBTC(address(proxy));
+        brBTCInstance = brBTC(address(proxy));
 
-        assertEq(omniBTCInstance.name(), "omniBTC");
-        assertEq(omniBTCInstance.decimals(), 8);
-        assert(omniBTCInstance.hasRole(omniBTCInstance.DEFAULT_ADMIN_ROLE(), _DEFAULT_ADMIN));
-        assert(omniBTCInstance.hasRole(omniBTCInstance.MINTER_ROLE(), _DEFAULT_MINTER));
+        assertEq(brBTCInstance.name(), "brBTC");
+        assertEq(brBTCInstance.decimals(), 8);
+        assert(brBTCInstance.hasRole(brBTCInstance.DEFAULT_ADMIN_ROLE(), _DEFAULT_ADMIN));
+        assert(brBTCInstance.hasRole(brBTCInstance.MINTER_ROLE(), _DEFAULT_MINTER));
     }
 
     function testSimpleMint() public {
         WBTC wbtc = new WBTC();
-        IERC20 omniBTCToken = IERC20(omniVaultInstance.omniBTC());
+        IERC20 brBTCToken = IERC20(brVaultInstance.brBTC());
 
         address[] memory allowedToken = new address[](1);
         allowedToken[0] = address(wbtc);
 
         vm.startPrank(_DEFAULT_ADMIN);
-        omniVaultInstance.allowToken(allowedToken);
-        omniVaultInstance.setCap(address(wbtc), 100 * 1e8);
+        brVaultInstance.allowToken(allowedToken);
+        brVaultInstance.setCap(address(wbtc), 100 * 1e8);
         vm.stopPrank();
 
         address _alice = address(0x123123);
@@ -83,21 +82,21 @@ contract OmniVaultTest is Test {
         assertEq(wbtc.balanceOf(_alice), 1 * 1e8);
 
         vm.startPrank(_alice);
-        wbtc.approve(address(omniVaultInstance), 1 * 1e8);
-        omniVaultInstance.mint(address(wbtc), 1 * 1e8);
+        wbtc.approve(address(brVaultInstance), 1 * 1e8);
+        brVaultInstance.mint(address(wbtc), 1 * 1e8);
         vm.stopPrank();
 
         assertEq(wbtc.balanceOf(_alice), 0);
-        assertEq(omniBTCToken.balanceOf(_alice), 1 * 1e8);
+        assertEq(brBTCToken.balanceOf(_alice), 1 * 1e8);
     }
 
     function testTokenNotAllowed() public {
         WBTC wbtc = new WBTC();
-        IERC20 omniBTCToken = IERC20(omniVaultInstance.omniBTC());
+        IERC20 brBTCToken = IERC20(brVaultInstance.brBTC());
 
         vm.startPrank(_DEFAULT_ADMIN);
-        // omniVaultInstance.allowToken(allowedToken);
-        omniVaultInstance.setCap(address(wbtc), 100 * 1e8);
+        // brVaultInstance.allowToken(allowedToken);
+        brVaultInstance.setCap(address(wbtc), 100 * 1e8);
         vm.stopPrank();
 
         address _alice = address(0x123123);
@@ -105,25 +104,25 @@ contract OmniVaultTest is Test {
         assertEq(wbtc.balanceOf(_alice), 1 * 1e8);
 
         vm.startPrank(_alice);
-        wbtc.approve(address(omniVaultInstance), 1 * 1e8);
+        wbtc.approve(address(brVaultInstance), 1 * 1e8);
         vm.expectRevert("SYS002");
-        omniVaultInstance.mint(address(wbtc), 1 * 1e8);
+        brVaultInstance.mint(address(wbtc), 1 * 1e8);
         vm.stopPrank();
 
         assertEq(wbtc.balanceOf(_alice), 1 * 1e8);
-        assertEq(omniBTCToken.balanceOf(_alice), 0 * 1e8);
+        assertEq(brBTCToken.balanceOf(_alice), 0 * 1e8);
     }
 
     function testTokenWithoutCap() public {
         WBTC wbtc = new WBTC();
-        IERC20 omniBTCToken = IERC20(omniVaultInstance.omniBTC());
+        IERC20 brBTCToken = IERC20(brVaultInstance.brBTC());
 
         address[] memory allowedToken = new address[](1);
         allowedToken[0] = address(wbtc);
 
         vm.startPrank(_DEFAULT_ADMIN);
-        omniVaultInstance.allowToken(allowedToken);
-        // omniVaultInstance.setCap(address(wbtc), 100 * 1e8);
+        brVaultInstance.allowToken(allowedToken);
+        // brVaultInstance.setCap(address(wbtc), 100 * 1e8);
         vm.stopPrank();
 
         address _alice = address(0x123123);
@@ -131,13 +130,13 @@ contract OmniVaultTest is Test {
         assertEq(wbtc.balanceOf(_alice), 1 * 1e8);
 
         vm.startPrank(_alice);
-        wbtc.approve(address(omniVaultInstance), 1 * 1e8);
+        wbtc.approve(address(brVaultInstance), 1 * 1e8);
         vm.expectRevert("USR003");
-        omniVaultInstance.mint(address(wbtc), 1 * 1e8);
+        brVaultInstance.mint(address(wbtc), 1 * 1e8);
         vm.stopPrank();
 
         assertEq(wbtc.balanceOf(_alice), 1 * 1e8);
-        assertEq(omniBTCToken.balanceOf(_alice), 0 * 1e8);
+        assertEq(brBTCToken.balanceOf(_alice), 0 * 1e8);
     }
 
     function testUtils() public {
@@ -154,9 +153,9 @@ contract OmniVaultTest is Test {
         allowedToken[1] = address(utils.MockWBTC18());
 
         vm.startPrank(_DEFAULT_ADMIN);
-        omniVaultInstance.allowToken(allowedToken);
-        omniVaultInstance.setCap(address(utils.MockWBTC8()), 8 * 1e8 + 1);
-        omniVaultInstance.setCap(address(utils.MockWBTC18()), 18 * 1e18 + 1);
+        brVaultInstance.allowToken(allowedToken);
+        brVaultInstance.setCap(address(utils.MockWBTC8()), 8 * 1e8 + 1);
+        brVaultInstance.setCap(address(utils.MockWBTC18()), 18 * 1e18 + 1);
         vm.stopPrank();
 
         address _alice = address(0xdeadbeef);
@@ -171,67 +170,67 @@ contract OmniVaultTest is Test {
         vm.stopPrank();
 
         vm.startPrank(_alice);
-        utils.MockWBTC8().approve(address(omniVaultInstance), 100 * 1e8);
-        utils.MockWBTC10().approve(address(omniVaultInstance), 100 * 1e10);
-        utils.MockWBTC18().approve(address(omniVaultInstance), 100 * 1e18);
-        utils.MockDecimalToken8().approve(address(omniVaultInstance), 100 * 1e8);
-        utils.MockDecimalToken10().approve(address(omniVaultInstance), 100 * 1e10);
-        utils.MockDecimalToken18().approve(address(omniVaultInstance), 100 * 1e18);
+        utils.MockWBTC8().approve(address(brVaultInstance), 100 * 1e8);
+        utils.MockWBTC10().approve(address(brVaultInstance), 100 * 1e10);
+        utils.MockWBTC18().approve(address(brVaultInstance), 100 * 1e18);
+        utils.MockDecimalToken8().approve(address(brVaultInstance), 100 * 1e8);
+        utils.MockDecimalToken10().approve(address(brVaultInstance), 100 * 1e10);
+        utils.MockDecimalToken18().approve(address(brVaultInstance), 100 * 1e18);
 
         // mint by 1 WBTC
-        omniVaultInstance.mint(address(utils.MockWBTC8()), 1 * 1e8);
-        assertEq(omniBTCInstance.balanceOf(_alice), 1 * 1e8);
+        brVaultInstance.mint(address(utils.MockWBTC8()), 1 * 1e8);
+        assertEq(brBTCInstance.balanceOf(_alice), 1 * 1e8);
         // mint by 7 WBTC
-        omniVaultInstance.mint(address(utils.MockWBTC8()), 7 * 1e8);
-        assertEq(omniBTCInstance.balanceOf(_alice), 8 * 1e8);
+        brVaultInstance.mint(address(utils.MockWBTC8()), 7 * 1e8);
+        assertEq(brBTCInstance.balanceOf(_alice), 8 * 1e8);
 
         // mint by 1 WBTC, should revert
         address _wbtc8 = address(utils.MockWBTC8());
         vm.expectRevert("USR003");
-        omniVaultInstance.mint(_wbtc8, 1 * 1e8);
-        assertEq(omniBTCInstance.balanceOf(_alice), 8 * 1e8);
+        brVaultInstance.mint(_wbtc8, 1 * 1e8);
+        assertEq(brBTCInstance.balanceOf(_alice), 8 * 1e8);
 
         // mint by 0 WBTC, should revert
         vm.expectRevert("USR010");
-        omniVaultInstance.mint(_wbtc8, 0);
-        assertEq(omniBTCInstance.balanceOf(_alice), 8 * 1e8);
+        brVaultInstance.mint(_wbtc8, 0);
+        assertEq(brBTCInstance.balanceOf(_alice), 8 * 1e8);
 
         // mint by 1 WBTC10, should revert
         address _wbtc10 = address(utils.MockWBTC10());
         vm.expectRevert("SYS002");
-        omniVaultInstance.mint(_wbtc10, 1 * 1e10);
-        assertEq(omniBTCInstance.balanceOf(_alice), 8 * 1e8);
+        brVaultInstance.mint(_wbtc10, 1 * 1e10);
+        assertEq(brBTCInstance.balanceOf(_alice), 8 * 1e8);
 
         // mint by 8 WBTC18
-        omniVaultInstance.mint(address(utils.MockWBTC18()), 8 * 1e18);
-        assertEq(omniBTCInstance.balanceOf(_alice), 16 * 1e8);
+        brVaultInstance.mint(address(utils.MockWBTC18()), 8 * 1e18);
+        assertEq(brBTCInstance.balanceOf(_alice), 16 * 1e8);
         // mint by 10 WBTC18
-        omniVaultInstance.mint(address(utils.MockWBTC18()), 10 * 1e18);
-        assertEq(omniBTCInstance.balanceOf(_alice), 26 * 1e8);
+        brVaultInstance.mint(address(utils.MockWBTC18()), 10 * 1e18);
+        assertEq(brBTCInstance.balanceOf(_alice), 26 * 1e8);
 
         // mint by 1 WBTC18, should revert
         address _wbtc18 = address(utils.MockWBTC18());
         vm.expectRevert("USR003");
-        omniVaultInstance.mint(_wbtc18, 1 * 1e18);
-        assertEq(omniBTCInstance.balanceOf(_alice), 26 * 1e8);
+        brVaultInstance.mint(_wbtc18, 1 * 1e18);
+        assertEq(brBTCInstance.balanceOf(_alice), 26 * 1e8);
 
         // mint by 1 DecimalToken8
         address _decimalToken8 = address(utils.MockDecimalToken8());
         vm.expectRevert("SYS002");
-        omniVaultInstance.mint(_decimalToken8, 1 * 1e8);
-        assertEq(omniBTCInstance.balanceOf(_alice), 26 * 1e8);
+        brVaultInstance.mint(_decimalToken8, 1 * 1e8);
+        assertEq(brBTCInstance.balanceOf(_alice), 26 * 1e8);
 
         // mint by 1 DecimalToken10
         address _decimalToken10 = address(utils.MockDecimalToken10());
         vm.expectRevert("SYS002");
-        omniVaultInstance.mint(_decimalToken10, 1 * 1e10);
-        assertEq(omniBTCInstance.balanceOf(_alice), 26 * 1e8);
+        brVaultInstance.mint(_decimalToken10, 1 * 1e10);
+        assertEq(brBTCInstance.balanceOf(_alice), 26 * 1e8);
 
         // mint by 1 DecimalToken18
         address _decimalToken18 = address(utils.MockDecimalToken18());
         vm.expectRevert("SYS002");
-        omniVaultInstance.mint(_decimalToken18, 1 * 1e18);
-        assertEq(omniBTCInstance.balanceOf(_alice), 26 * 1e8);
+        brVaultInstance.mint(_decimalToken18, 1 * 1e18);
+        assertEq(brBTCInstance.balanceOf(_alice), 26 * 1e8);
 
         vm.stopPrank();
     }
@@ -243,9 +242,9 @@ contract OmniVaultTest is Test {
         address _pauser = address(0x1000001);
 
         vm.startPrank(_DEFAULT_ADMIN);
-        omniVaultInstance.allowToken(allowedToken);
-        omniVaultInstance.setCap(address(utils.MockWBTC8()), 100 * 1e8);
-        omniVaultInstance.grantRole(omniVaultInstance.PAUSER_ROLE(), _pauser);
+        brVaultInstance.allowToken(allowedToken);
+        brVaultInstance.setCap(address(utils.MockWBTC8()), 100 * 1e8);
+        brVaultInstance.grantRole(brVaultInstance.PAUSER_ROLE(), _pauser);
         vm.stopPrank();
 
         address _alice = address(0x2123123);
@@ -255,30 +254,30 @@ contract OmniVaultTest is Test {
         vm.stopPrank();
 
         vm.startPrank(_alice);
-        utils.MockWBTC8().approve(address(omniVaultInstance), 100 * 1e8);
-        omniVaultInstance.mint(address(utils.MockWBTC8()), 1 * 1e8);
-        assertEq(omniBTCInstance.balanceOf(_alice), 1 * 1e8);
+        utils.MockWBTC8().approve(address(brVaultInstance), 100 * 1e8);
+        brVaultInstance.mint(address(utils.MockWBTC8()), 1 * 1e8);
+        assertEq(brBTCInstance.balanceOf(_alice), 1 * 1e8);
         vm.stopPrank();
 
         vm.startPrank(_pauser);
-        omniVaultInstance.stopService();
+        brVaultInstance.stopService();
         vm.stopPrank();
 
         address _wbtc8 = address(utils.MockWBTC8());
 
         vm.startPrank(_alice);
         vm.expectRevert("SYS011");
-        omniVaultInstance.mint(_wbtc8, 1 * 1e8);
-        assertEq(omniBTCInstance.balanceOf(_alice), 1 * 1e8);
+        brVaultInstance.mint(_wbtc8, 1 * 1e8);
+        assertEq(brBTCInstance.balanceOf(_alice), 1 * 1e8);
         vm.stopPrank();
 
         vm.startPrank(_pauser);
-        omniVaultInstance.startService();
+        brVaultInstance.startService();
         vm.stopPrank();
 
         vm.startPrank(_alice);
-        omniVaultInstance.mint(_wbtc8, 1 * 1e8);
-        assertEq(omniBTCInstance.balanceOf(_alice), 2 * 1e8);
+        brVaultInstance.mint(_wbtc8, 1 * 1e8);
+        assertEq(brBTCInstance.balanceOf(_alice), 2 * 1e8);
         vm.stopPrank();
     }
 
@@ -289,9 +288,9 @@ contract OmniVaultTest is Test {
         address _pauser = address(0x1000001);
 
         vm.startPrank(_DEFAULT_ADMIN);
-        omniVaultInstance.allowToken(allowedToken);
-        omniVaultInstance.setCap(address(utils.MockWBTC8()), 100 * 1e8);
-        omniVaultInstance.grantRole(omniVaultInstance.PAUSER_ROLE(), _pauser);
+        brVaultInstance.allowToken(allowedToken);
+        brVaultInstance.setCap(address(utils.MockWBTC8()), 100 * 1e8);
+        brVaultInstance.grantRole(brVaultInstance.PAUSER_ROLE(), _pauser);
         vm.stopPrank();
 
         address _alice = address(0xaabb);
@@ -301,30 +300,30 @@ contract OmniVaultTest is Test {
         vm.stopPrank();
 
         vm.startPrank(_alice);
-        utils.MockWBTC8().approve(address(omniVaultInstance), 100 * 1e8);
-        omniVaultInstance.mint(address(utils.MockWBTC8()), 1 * 1e8);
-        assertEq(omniBTCInstance.balanceOf(_alice), 1 * 1e8);
+        utils.MockWBTC8().approve(address(brVaultInstance), 100 * 1e8);
+        brVaultInstance.mint(address(utils.MockWBTC8()), 1 * 1e8);
+        assertEq(brBTCInstance.balanceOf(_alice), 1 * 1e8);
         vm.stopPrank();
 
         vm.startPrank(_pauser);
-        omniVaultInstance.pauseToken(allowedToken);
+        brVaultInstance.pauseToken(allowedToken);
         vm.stopPrank();
 
         address _wbtc8 = address(utils.MockWBTC8());
 
         vm.startPrank(_alice);
         vm.expectRevert("SYS002");
-        omniVaultInstance.mint(_wbtc8, 1 * 1e8);
-        assertEq(omniBTCInstance.balanceOf(_alice), 1 * 1e8);
+        brVaultInstance.mint(_wbtc8, 1 * 1e8);
+        assertEq(brBTCInstance.balanceOf(_alice), 1 * 1e8);
         vm.stopPrank();
 
         vm.startPrank(_pauser);
-        omniVaultInstance.unpauseToken(allowedToken);
+        brVaultInstance.unpauseToken(allowedToken);
         vm.stopPrank();
 
         vm.startPrank(_alice);
-        omniVaultInstance.mint(_wbtc8, 1 * 1e8);
-        assertEq(omniBTCInstance.balanceOf(_alice), 2 * 1e8);
+        brVaultInstance.mint(_wbtc8, 1 * 1e8);
+        assertEq(brBTCInstance.balanceOf(_alice), 2 * 1e8);
         vm.stopPrank();
     }
 
@@ -333,8 +332,8 @@ contract OmniVaultTest is Test {
         allowedToken[0] = address(utils.MockWBTC8());
 
         vm.startPrank(_DEFAULT_ADMIN);
-        omniVaultInstance.allowToken(allowedToken);
-        omniVaultInstance.setCap(address(utils.MockWBTC8()), 100 * 1e8);
+        brVaultInstance.allowToken(allowedToken);
+        brVaultInstance.setCap(address(utils.MockWBTC8()), 100 * 1e8);
         vm.stopPrank();
 
         address _alice = address(0xaabbccdd);
@@ -344,30 +343,30 @@ contract OmniVaultTest is Test {
         vm.stopPrank();
 
         vm.startPrank(_alice);
-        utils.MockWBTC8().approve(address(omniVaultInstance), 100 * 1e8);
-        omniVaultInstance.mint(address(utils.MockWBTC8()), 1 * 1e8);
-        assertEq(omniBTCInstance.balanceOf(_alice), 1 * 1e8);
+        utils.MockWBTC8().approve(address(brVaultInstance), 100 * 1e8);
+        brVaultInstance.mint(address(utils.MockWBTC8()), 1 * 1e8);
+        assertEq(brBTCInstance.balanceOf(_alice), 1 * 1e8);
         vm.stopPrank();
 
         vm.startPrank(_DEFAULT_ADMIN);
-        omniVaultInstance.denyToken(allowedToken);
+        brVaultInstance.denyToken(allowedToken);
         vm.stopPrank();
 
         address _wbtc8 = address(utils.MockWBTC8());
 
         vm.startPrank(_alice);
         vm.expectRevert("SYS002");
-        omniVaultInstance.mint(_wbtc8, 1 * 1e8);
-        assertEq(omniBTCInstance.balanceOf(_alice), 1 * 1e8);
+        brVaultInstance.mint(_wbtc8, 1 * 1e8);
+        assertEq(brBTCInstance.balanceOf(_alice), 1 * 1e8);
         vm.stopPrank();
 
         vm.startPrank(_DEFAULT_ADMIN);
-        omniVaultInstance.allowToken(allowedToken);
+        brVaultInstance.allowToken(allowedToken);
         vm.stopPrank();
 
         vm.startPrank(_alice);
-        omniVaultInstance.mint(_wbtc8, 1 * 1e8);
-        assertEq(omniBTCInstance.balanceOf(_alice), 2 * 1e8);
+        brVaultInstance.mint(_wbtc8, 1 * 1e8);
+        assertEq(brBTCInstance.balanceOf(_alice), 2 * 1e8);
         vm.stopPrank();
     }
 
@@ -378,9 +377,9 @@ contract OmniVaultTest is Test {
         address _operator = address(0x1000002);
 
         vm.startPrank(_DEFAULT_ADMIN);
-        omniVaultInstance.allowToken(allowedToken);
-        omniVaultInstance.setCap(address(utils.MockWBTC8()), 100 * 1e8);
-        omniVaultInstance.grantRole(omniVaultInstance.OPERATOR_ROLE(), _operator);
+        brVaultInstance.allowToken(allowedToken);
+        brVaultInstance.setCap(address(utils.MockWBTC8()), 100 * 1e8);
+        brVaultInstance.grantRole(brVaultInstance.OPERATOR_ROLE(), _operator);
         vm.stopPrank();
 
         address _alice = address(0x1111);
@@ -390,39 +389,39 @@ contract OmniVaultTest is Test {
         vm.stopPrank();
 
         vm.startPrank(_alice);
-        utils.MockWBTC8().approve(address(omniVaultInstance), 100 * 1e8);
-        omniVaultInstance.mint(address(utils.MockWBTC8()), 2 * 1e8);
-        assertEq(omniBTCInstance.balanceOf(_alice), 2 * 1e8);
-        omniBTCInstance.transfer(address(omniVaultInstance), 2 * 1e8);
-        assertEq(omniBTCInstance.balanceOf(_alice), 0);
-        assertEq(omniBTCInstance.balanceOf(address(omniVaultInstance)), 2 * 1e8);
+        utils.MockWBTC8().approve(address(brVaultInstance), 100 * 1e8);
+        brVaultInstance.mint(address(utils.MockWBTC8()), 2 * 1e8);
+        assertEq(brBTCInstance.balanceOf(_alice), 2 * 1e8);
+        brBTCInstance.transfer(address(brVaultInstance), 2 * 1e8);
+        assertEq(brBTCInstance.balanceOf(_alice), 0);
+        assertEq(brBTCInstance.balanceOf(address(brVaultInstance)), 2 * 1e8);
         vm.stopPrank();
 
         address[] memory allowedTarget = new address[](1);
-        allowedTarget[0] = address(omniBTCInstance);
+        allowedTarget[0] = address(brBTCInstance);
 
         vm.startPrank(_DEFAULT_ADMIN);
-        omniVaultInstance.allowTarget(allowedTarget);
+        brVaultInstance.allowTarget(allowedTarget);
         vm.stopPrank();
 
         bytes memory _calldata = abi.encodeWithSelector(IERC20.transfer.selector, address(_alice), 1 * 1e8);
 
         vm.startPrank(_operator);
-        omniVaultInstance.execute(address(omniBTCInstance), _calldata, 0);
+        brVaultInstance.execute(address(brBTCInstance), _calldata, 0);
         vm.stopPrank();
-        assertEq(omniBTCInstance.balanceOf(_alice), 1 * 1e8);
-        assertEq(omniBTCInstance.balanceOf(address(omniVaultInstance)), 1 * 1e8);
+        assertEq(brBTCInstance.balanceOf(_alice), 1 * 1e8);
+        assertEq(brBTCInstance.balanceOf(address(brVaultInstance)), 1 * 1e8);
 
         vm.startPrank(_DEFAULT_ADMIN);
-        omniVaultInstance.denyTarget(allowedTarget);
+        brVaultInstance.denyTarget(allowedTarget);
         vm.stopPrank();
 
         vm.startPrank(_operator);
         vm.expectRevert("SYS001");
-        omniVaultInstance.execute(address(omniBTCInstance), _calldata, 0);
+        brVaultInstance.execute(address(brBTCInstance), _calldata, 0);
         vm.stopPrank();
-        assertEq(omniBTCInstance.balanceOf(_alice), 1 * 1e8);
-        assertEq(omniBTCInstance.balanceOf(address(omniVaultInstance)), 1 * 1e8);
+        assertEq(brBTCInstance.balanceOf(_alice), 1 * 1e8);
+        assertEq(brBTCInstance.balanceOf(address(brVaultInstance)), 1 * 1e8);
     }
 
     function testDecimal() public {
@@ -430,17 +429,17 @@ contract OmniVaultTest is Test {
         allowedToken[0] = address(utils.MockDecimalToken8());
 
         vm.startPrank(_DEFAULT_ADMIN);
-        omniVaultInstance.allowToken(allowedToken);
-        omniVaultInstance.setCap(address(utils.MockDecimalToken8()), 100 * 1e8);
+        brVaultInstance.allowToken(allowedToken);
+        brVaultInstance.setCap(address(utils.MockDecimalToken8()), 100 * 1e8);
         vm.stopPrank();
 
         address _alice = address(0xdeadbeefaa);
         utils.MockDecimalToken8().mint(_alice, 100 * 1e8);
 
         vm.startPrank(_alice);
-        utils.MockDecimalToken8().approve(address(omniVaultInstance), 100 * 1e8);
-        omniVaultInstance.mint(address(utils.MockDecimalToken8()), 1 * 1e8);
-        assertEq(omniBTCInstance.balanceOf(_alice), 1 * 1e8);
+        utils.MockDecimalToken8().approve(address(brVaultInstance), 100 * 1e8);
+        brVaultInstance.mint(address(utils.MockDecimalToken8()), 1 * 1e8);
+        assertEq(brBTCInstance.balanceOf(_alice), 1 * 1e8);
         vm.stopPrank();
 
         IResetDecimal(address(utils.MockDecimalToken8())).resetDecimals(10);
@@ -448,8 +447,8 @@ contract OmniVaultTest is Test {
         vm.startPrank(_alice);
         address _tk = address(utils.MockDecimalToken8());
         vm.expectRevert("USR010");
-        omniVaultInstance.mint(_tk, 1 * 1e8);
-        assertEq(omniBTCInstance.balanceOf(_alice), 1 * 1e8);
+        brVaultInstance.mint(_tk, 1 * 1e8);
+        assertEq(brBTCInstance.balanceOf(_alice), 1 * 1e8);
         vm.stopPrank();
     }
 }
