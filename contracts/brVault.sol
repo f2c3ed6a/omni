@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/utils/Address.sol";
 
 import "../interfaces/IMintableContract.sol";
 
-contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUpgradeable {
+contract brVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUpgradeable {
     using SafeERC20 for IERC20;
     using Address for address;
 
@@ -23,9 +23,9 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
     uint256 public constant DECIMAL_PRECISION18 = 1e10;
 
     /**
-     * @notice The address of the ERC20 omniBTC token.
+     * @notice The address of the ERC20 brBTC token.
      */
-    address public omniBTC;
+    address public brBTC;
 
     /**
      * @notice Mapping to store the used cap for each type of wrapped BTC.
@@ -99,22 +99,22 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
     /**
      * @notice Initializes the contract with admin and token settings.
      * @param _defaultAdmin The default admin address (RBAC).
-     * @param _omniBTC The address of the omniBTC token.
+     * @param _brBTC The address of the brBTC token.
      */
-    function initialize(address _defaultAdmin, address _omniBTC) public initializer {
+    function initialize(address _defaultAdmin, address _brBTC) public initializer {
         __AccessControl_init();
         __ReentrancyGuard_init();
 
-        require(_omniBTC != address(0x0), "SYS001");
+        require(_brBTC != address(0x0), "SYS001");
 
         _grantRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
         _grantRole(PAUSER_ROLE, _defaultAdmin);
 
-        omniBTC = _omniBTC;
+        brBTC = _brBTC;
     }
 
     /**
-     * @notice Allow token to mint omniBTC.
+     * @notice Allow token to mint brBTC.
      * @param _tokens The address of the token.
      */
     function allowToken(address[] calldata _tokens) external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -125,7 +125,7 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
     }
 
     /**
-     * @notice Deny token to mint omniBTC.
+     * @notice Deny token to mint brBTC.
      * @param _tokens The address of the token.
      */
     function denyToken(address[] calldata _tokens) external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -182,7 +182,7 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
      */
 
     /**
-     * @notice Pause token to mint omniBTC.
+     * @notice Pause token to mint brBTC.
      * @param _tokens The address of the token.
      */
     function pauseToken(address[] calldata _tokens) external onlyRole(PAUSER_ROLE) {
@@ -193,7 +193,7 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
     }
 
     /**
-     * @notice Unpause token to mint omniBTC.
+     * @notice Unpause token to mint brBTC.
      * @param _tokens The address of the token.
      */
     function unpauseToken(address[] calldata _tokens) external onlyRole(PAUSER_ROLE) {
@@ -253,7 +253,7 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
      */
 
     /**
-     * @notice Mint omniBTC by sending token to this contract.
+     * @notice Mint brBTC by sending token to this contract.
      * @param _token The address of the token.
      * @param _amount The amount of token to mint.
      */
@@ -271,27 +271,27 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
      */
 
     /**
-     * @notice Mint omniBTC by sending token to this contract. internal only.
+     * @notice Mint brBTC by sending token to this contract. internal only.
      * @param _sender The address of the sender.
      * @param _token The address of the token.
      * @param _amount The amount of token to mint.
      */
     function _mint(address _sender, address _token, uint256 _amount) internal {
-        uint256 omniBTCAmount = _amounts(_token, _amount);
-        require(omniBTCAmount > 0, "USR010");
+        uint256 brBTCAmount = _amounts(_token, _amount);
+        require(brBTCAmount > 0, "USR010");
 
         uint256 tokenUsedCap = tokenUsedCaps[_token];
         require((tokenUsedCap + _amount < tokenCaps[_token]), "USR003");
         tokenUsedCaps[_token] = tokenUsedCap + _amount;
 
         IERC20(_token).safeTransferFrom(_sender, address(this), _amount);
-        IMintableContract(omniBTC).mint(_sender, omniBTCAmount);
+        IMintableContract(brBTC).mint(_sender, brBTCAmount);
 
         emit Minted(_token, _amount);
     }
 
     /**
-     * @notice Convert the amount to omniBTC amount.
+     * @notice Convert the amount to brBTC amount.
      * @param _token The address of the token.
      * @param _amount The amount of token.
      */
@@ -311,7 +311,7 @@ contract omniVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUp
      */
 
     /**
-     * @notice Event emitted when omniBTC is minted.
+     * @notice Event emitted when brBTC is minted.
      */
     event Minted(address token, uint256 amount);
 
