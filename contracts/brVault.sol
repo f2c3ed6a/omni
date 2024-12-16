@@ -164,7 +164,7 @@ contract brVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUpgr
      */
     function setCap(address _token, uint256 _cap) external onlyRole(DEFAULT_ADMIN_ROLE) {
         require(_token != address(0x0) && allowedTokens[_token], "SYS003");
-        require(_cap > 0, "USR017");
+        require(_cap > tokenUsedCaps[_token], "USR017");
 
         uint8 decs = ERC20(_token).decimals();
 
