@@ -163,7 +163,7 @@ contract brVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUpgr
      * @param _cap The cap for the token.
      */
     function setCap(address _token, uint256 _cap) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(_token != address(0x0), "SYS003");
+        require(_token != address(0x0) && allowedTokens[_token], "SYS003");
         require(_cap > 0, "USR017");
 
         uint8 decs = ERC20(_token).decimals();
@@ -277,29 +277,37 @@ contract brVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUpgr
      * @param _amount The amount of token to mint.
      */
     function _mint(address _sender, address _token, uint256 _amount) internal {
-        uint256 brBTCAmount = _amounts(_token, _amount);
+        (uint256 tokenAmount, uint256 brBTCAmount) = _amounts(_token, _amount);
         require(brBTCAmount > 0, "USR010");
 
         uint256 tokenUsedCap = tokenUsedCaps[_token];
-        require((tokenUsedCap + _amount < tokenCaps[_token]), "USR003");
-        tokenUsedCaps[_token] = tokenUsedCap + _amount;
+        require((tokenUsedCap + tokenAmount < tokenCaps[_token]), "USR003");
+        tokenUsedCaps[_token] = tokenUsedCap + tokenAmount;
 
-        IERC20(_token).safeTransferFrom(_sender, address(this), _amount);
+        IERC20(_token).safeTransferFrom(_sender, address(this), tokenAmount);
         IMintableContract(brBTC).mint(_sender, brBTCAmount);
 
-        emit Minted(_token, _amount);
+        emit Minted(_token, tokenAmount);
     }
 
     /**
-     * @notice Convert the amount to brBTC amount.
+     * @notice Convert the amount to token amount and brBTC amount.
      * @param _token The address of the token.
      * @param _amount The amount of token.
      */
-    function _amounts(address _token, uint256 _amount) internal view returns (uint256) {
+    function _amounts(address _token, uint256 _amount)
+        internal
+        view
+        returns (uint256 tokenAmount, uint256 brBTCAmount)
+    {
         uint8 decs = ERC20(_token).decimals();
-        if (decs == 8) return _amount;
-        if (decs == 18) return _amount / DECIMAL_PRECISION18;
-        return 0;
+        if (decs == 8) {
+            brBTCAmount = _amount;
+            tokenAmount = brBTCAmount;
+        } else if (decs == 18) {
+            brBTCAmount = _amount / DECIMAL_PRECISION18;
+            tokenAmount = brBTCAmount * DECIMAL_PRECISION18;
+        }
     }
 
     /**
