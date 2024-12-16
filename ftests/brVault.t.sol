@@ -96,6 +96,7 @@ contract brVaultTest is Test {
 
         vm.startPrank(_DEFAULT_ADMIN);
         // brVaultInstance.allowToken(allowedToken);
+        vm.expectRevert("SYS003");
         brVaultInstance.setCap(address(wbtc), 100 * 1e8);
         vm.stopPrank();
 
