@@ -20,7 +20,7 @@ EVM_RPC=<evm-rpc>
 ```bash
 source .env
 
-forge script -vvvv --account $DEPLOYER --sender $DEPLOYER_ADDRESS -f $ETH_RPC --broadcast --verify fscripts/deployProxyAdmin.s.sol
+forge script -vvvv --account $DEPLOYER --sender $DEPLOYER_ADDRESS -f $EVM_RPC --broadcast --verify fscripts/deployProxyAdmin.s.sol
 
 # copy ProxyAdmin address to .env
 ```
@@ -30,7 +30,7 @@ forge script -vvvv --account $DEPLOYER --sender $DEPLOYER_ADDRESS -f $ETH_RPC --
 ```bash
 source .env
 
-forge script -vvvv --account $DEPLOYER --sender $DEPLOYER_ADDRESS -f $ETH_RPC --broadcast --verify fscripts/deployBrBTC.s.sol
+forge script -vvvv --account $DEPLOYER --sender $DEPLOYER_ADDRESS -f $EVM_RPC --broadcast --verify fscripts/deployBrBTC.s.sol
 
 # copy brBTC address to .env
 ```
@@ -40,7 +40,7 @@ forge script -vvvv --account $DEPLOYER --sender $DEPLOYER_ADDRESS -f $ETH_RPC --
 ```bash
 source .env
 
-forge script -vvvv --account $DEPLOYER --sender $DEPLOYER_ADDRESS -f $ETH_RPC --broadcast --verify fscripts/deployBrVault.s.sol
+forge script -vvvv --account $DEPLOYER --sender $DEPLOYER_ADDRESS -f $EVM_RPC --broadcast --verify fscripts/deployBrVault.s.sol
 
 # copy brVault address to .env
 ```
@@ -50,5 +50,5 @@ forge script -vvvv --account $DEPLOYER --sender $DEPLOYER_ADDRESS -f $ETH_RPC --
 ```bash
 source .env
 
-forge script -vvvv --account $DEPLOYER --sender $DEPLOYER_ADDRESS -f $ETH_RPC --broadcast --verify fscripts/configBrVault.s.sol
+forge script -vvvv --account $DEPLOYER --sender $DEPLOYER_ADDRESS -f $EVM_RPC --broadcast --verify fscripts/configBrVault.s.sol
 ```
