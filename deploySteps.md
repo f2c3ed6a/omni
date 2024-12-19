@@ -11,8 +11,9 @@ PROXY_ADMIN=
 BRBTC=
 BRVAULT=
 
-# eth rpc or bsc rpc
 EVM_RPC=<evm-rpc>
+ETHERSCAN_API_URL=<etherscan-api-url> # https://api.etherscan.io/api , https://api.bscscan.com/api
+ETHERSCAN_API_KEY=<etherscan-api-key>
 ```
 
 2. ProxyAdmin
@@ -20,7 +21,7 @@ EVM_RPC=<evm-rpc>
 ```bash
 source .env
 
-forge script -vvvv --account $DEPLOYER --sender $DEPLOYER_ADDRESS -f $EVM_RPC --broadcast --verify fscripts/deployProxyAdmin.s.sol
+forge script -vvvv --account $DEPLOYER --sender $DEPLOYER_ADDRESS -f $EVM_RPC --broadcast --verify --verifier-api-key $ETHERSCAN_API_KEY --verifier-url $ETHERSCAN_API_URL fscripts/deployProxyAdmin.s.sol
 
 # copy ProxyAdmin address to .env
 ```
@@ -30,7 +31,7 @@ forge script -vvvv --account $DEPLOYER --sender $DEPLOYER_ADDRESS -f $EVM_RPC --
 ```bash
 source .env
 
-forge script -vvvv --account $DEPLOYER --sender $DEPLOYER_ADDRESS -f $EVM_RPC --broadcast --verify fscripts/deployBrBTC.s.sol
+forge script -vvvv --account $DEPLOYER --sender $DEPLOYER_ADDRESS -f $EVM_RPC --broadcast --verify --verifier-api-key $ETHERSCAN_API_KEY --verifier-url $ETHERSCAN_API_URL fscripts/deployBrBTC.s.sol
 
 # copy brBTC address to .env
 ```
@@ -40,7 +41,7 @@ forge script -vvvv --account $DEPLOYER --sender $DEPLOYER_ADDRESS -f $EVM_RPC --
 ```bash
 source .env
 
-forge script -vvvv --account $DEPLOYER --sender $DEPLOYER_ADDRESS -f $EVM_RPC --broadcast --verify fscripts/deployBrVault.s.sol
+forge script -vvvv --account $DEPLOYER --sender $DEPLOYER_ADDRESS -f $EVM_RPC --broadcast --verify --verifier-api-key $ETHERSCAN_API_KEY --verifier-url $ETHERSCAN_API_URL fscripts/deployBrVault.s.sol
 
 # copy brVault address to .env
 ```
@@ -50,5 +51,5 @@ forge script -vvvv --account $DEPLOYER --sender $DEPLOYER_ADDRESS -f $EVM_RPC --
 ```bash
 source .env
 
-forge script -vvvv --account $DEPLOYER --sender $DEPLOYER_ADDRESS -f $EVM_RPC --broadcast --verify fscripts/configBrVault.s.sol
+forge script -vvvv --account $DEPLOYER --sender $DEPLOYER_ADDRESS -f $EVM_RPC --broadcast --verify --verifier-api-key $ETHERSCAN_API_KEY --verifier-url $ETHERSCAN_API_URL fscripts/configBrVault.s.sol
 ```
