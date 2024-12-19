@@ -19,7 +19,7 @@ contract MyScript is Script {
         console.log("[Signer] deployer:", deployer);
 
         brVault _brVault = brVault(_brVaultAddr);
-        if (block.chainid == 17000) {
+        if (block.chainid == 1) {
             console.log("[Chain] Ethereum Mainnet");
 
             address _uniBTC = address(0x004E9C3EF86bc1ca1f0bB5C7662861Ee93350568); // 8
