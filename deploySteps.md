@@ -45,3 +45,10 @@ forge script -vvvv --account $DEPLOYER --sender $DEPLOYER_ADDRESS -f $ETH_RPC --
 # copy brVault address to .env
 ```
 
+5. config brVault & brBTC
+
+```bash
+source .env
+
+forge script -vvvv --account $DEPLOYER --sender $DEPLOYER_ADDRESS -f $ETH_RPC --broadcast --verify fscripts/configBrVault.s.sol
+```
