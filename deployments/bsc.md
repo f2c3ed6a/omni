@@ -1,0 +1,7 @@
+# Binance Smart Chain
+
+## Core
+
+- ProxyAdmin: 0x79F2c32204e997d4d49de3d45A6130d627449597
+- brBTC: 0x733a6c29eDA4a58931AE81b8d91e29f2EAf01df3
+- brVault: 0x1dF46ec5e86FeC4589b3fA7D60B6Dc7Ef890AD93
