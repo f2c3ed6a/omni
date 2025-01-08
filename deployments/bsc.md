@@ -10,3 +10,4 @@
 - uniBTC: [0x6B2a01A5f79dEb4c2f3c0eDa7b01DF456FbD726a](https://bscscan.com/token/0x6b2a01a5f79deb4c2f3c0eda7b01df456fbd726a)
 - BTCB: [0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c](https://bscscan.com/token/0x7130d2a12b9bcbfae4f2634d864a1ee1ce3ead9c)
 - FBTC: [0xC96dE26018A54D51c097160568752c4E3BD6C364](https://bscscan.com/token/0xc96de26018a54d51c097160568752c4e3bd6c364)
+- MBTC: [0x9bfa177621119e64cecbeabe184ab9993e2ef727](https://bscscan.com/token/0x9bfa177621119e64cecbeabe184ab9993e2ef727)
