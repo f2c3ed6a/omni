@@ -11,3 +11,6 @@
 - BTCB: [0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c](https://bscscan.com/token/0x7130d2a12b9bcbfae4f2634d864a1ee1ce3ead9c)
 - FBTC: [0xC96dE26018A54D51c097160568752c4E3BD6C364](https://bscscan.com/token/0xc96de26018a54d51c097160568752c4e3bd6c364)
 - MBTC: [0x9bfa177621119e64cecbeabe184ab9993e2ef727](https://bscscan.com/token/0x9bfa177621119e64cecbeabe184ab9993e2ef727)
+
+## TransferProxy
+- TransferProxy: [0x782d9A8B9BA6de823835C95242d955508d2b5EA9](https://bscscan.com/address/0x782d9a8b9ba6de823835c95242d955508d2b5ea9)
