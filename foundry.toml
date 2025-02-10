@@ -8,4 +8,6 @@ script = 'fscripts'
 optimizer = true
 optimizer_runs = 200
 solc = "0.8.17"
+
+# comment this line if occurs prevrandao not set error.
 evm_version = "shanghai"
