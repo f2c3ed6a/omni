@@ -21,7 +21,7 @@ ETHERSCAN_API_KEY=<etherscan-api-key>
 ```bash
 source .env
 
-forge script -vvvv --account $DEPLOYER --sender $DEPLOYER_ADDRESS -f $EVM_RPC --broadcast --verify --verifier-api-key $ETHERSCAN_API_KEY --verifier-url $ETHERSCAN_API_URL fscripts/deployProxyAdmin.s.sol
+forge script -vvvv --account $DEPLOYER --sender $DEPLOYER_ADDRESS -f $EVM_RPC --broadcast --verify --verifier custom --verifier-api-key $ETHERSCAN_API_KEY --verifier-url $ETHERSCAN_API_URL fscripts/deployProxyAdmin.s.sol
 
 # copy ProxyAdmin address to .env
 ```
@@ -31,7 +31,7 @@ forge script -vvvv --account $DEPLOYER --sender $DEPLOYER_ADDRESS -f $EVM_RPC --
 ```bash
 source .env
 
-forge script -vvvv --account $DEPLOYER --sender $DEPLOYER_ADDRESS -f $EVM_RPC --broadcast --verify --verifier-api-key $ETHERSCAN_API_KEY --verifier-url $ETHERSCAN_API_URL fscripts/deployBrBTC.s.sol
+forge script -vvvv --account $DEPLOYER --sender $DEPLOYER_ADDRESS -f $EVM_RPC --broadcast --verify --verifier custom --verifier-api-key $ETHERSCAN_API_KEY --verifier-url $ETHERSCAN_API_URL fscripts/deployBrBTC.s.sol
 
 # copy brBTC address to .env
 ```
@@ -41,7 +41,7 @@ forge script -vvvv --account $DEPLOYER --sender $DEPLOYER_ADDRESS -f $EVM_RPC --
 ```bash
 source .env
 
-forge script -vvvv --account $DEPLOYER --sender $DEPLOYER_ADDRESS -f $EVM_RPC --broadcast --verify --verifier-api-key $ETHERSCAN_API_KEY --verifier-url $ETHERSCAN_API_URL fscripts/deployBrVault.s.sol
+forge script -vvvv --account $DEPLOYER --sender $DEPLOYER_ADDRESS -f $EVM_RPC --broadcast --verify --verifier custom --verifier-api-key $ETHERSCAN_API_KEY --verifier-url $ETHERSCAN_API_URL fscripts/deployBrVault.s.sol
 
 # copy brVault address to .env
 ```
@@ -51,5 +51,5 @@ forge script -vvvv --account $DEPLOYER --sender $DEPLOYER_ADDRESS -f $EVM_RPC --
 ```bash
 source .env
 
-forge script -vvvv --account $DEPLOYER --sender $DEPLOYER_ADDRESS -f $EVM_RPC --broadcast --verify --verifier-api-key $ETHERSCAN_API_KEY --verifier-url $ETHERSCAN_API_URL fscripts/configBrVault.s.sol
+forge script -vvvv --account $DEPLOYER --sender $DEPLOYER_ADDRESS -f $EVM_RPC --broadcast --verify --verifier custom --verifier-api-key $ETHERSCAN_API_KEY --verifier-url $ETHERSCAN_API_URL fscripts/configBrVault.s.sol
 ```
