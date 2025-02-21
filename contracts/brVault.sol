@@ -7,10 +7,12 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/contracts/interfaces/IERC1271.sol";
+import "@openzeppelin/contracts/utils/Cryptography/ECDSA.sol";
 
 import "../interfaces/IMintableContract.sol";
 
-contract brVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUpgradeable {
+contract brVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUpgradeable, IERC1271 {
     using SafeERC20 for IERC20;
     using Address for address;
 
@@ -70,6 +72,25 @@ contract brVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUpgr
      */
     constructor() {
         _disableInitializers();
+    }
+
+    /**
+     * ======================================================================================
+     *
+     * VIEW FUNCTIONS
+     *
+     * ======================================================================================
+     */
+
+    /**
+     * @notice Implementation of updated EIP-1271 signature validation method.
+     * @param _dataHash Hash of the data signed on the behalf of this contract
+     * @param _signature Signature byte array associated with _dataHash
+     * @return magicValue EIP1271 magic value if signature is valid, otherwise 0x0
+     */
+    function isValidSignature(bytes32 _dataHash, bytes memory _signature) external view returns (bytes4 magicValue) {
+        address _signer = ECDSA.recover(_dataHash, _signature);
+        return hasRole(OPERATOR_ROLE, _signer) ? IERC1271.isValidSignature.selector : bytes4(0);
     }
 
     /**
