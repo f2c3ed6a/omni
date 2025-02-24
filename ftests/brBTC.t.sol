@@ -57,4 +57,62 @@ contract brBTCTest is Test {
 
         assertEq(brBTCInstance.balanceOf(_alice), 1);
     }
+
+    function testFreeze() public {
+        address _alice = address(0xdeadbeef);
+
+        vm.startPrank(_DEFAULT_MINTER);
+        brBTCInstance.mint(_alice, 3);
+        vm.stopPrank();
+
+        assertEq(brBTCInstance.balanceOf(_alice), 3);
+
+        vm.startPrank(_alice);
+        brBTCInstance.transfer(address(0x1), 1);
+        vm.stopPrank();
+
+        assertEq(brBTCInstance.balanceOf(_alice), 2);
+
+        vm.startPrank(_DEFAULT_ADMIN);
+        brBTCInstance.setFreezeToRecipient(_DEFAULT_ADMIN);
+
+        address[] memory users = new address[](1);
+        users[0] = _alice;
+
+        vm.expectRevert(
+            "AccessControl: account 0x0000000000000000000000000000000000000002 is missing role 0x92de27771f92d6942691d73358b3a4673e4880de8356f8f2cf452be87e02d363"
+        );
+        brBTCInstance.freezeUsers(users);
+
+        brBTCInstance.grantRole(brBTCInstance.FREEZER_ROLE(), _DEFAULT_ADMIN);
+        brBTCInstance.freezeUsers(users);
+        vm.stopPrank();
+
+        assertEq(brBTCInstance.frozenUsers(_alice), true);
+
+        vm.startPrank(_alice);
+        vm.expectRevert("USR016");
+        brBTCInstance.transfer(address(0xbabecafe0001), 1);
+
+        vm.expectRevert("USR016");
+        brBTCInstance.transfer(address(0xbabecafe0002), 1);
+
+        vm.expectRevert("USR016");
+        brBTCInstance.transfer(_alice, 1);
+
+        brBTCInstance.transfer(_DEFAULT_ADMIN, 1);
+        vm.stopPrank();
+
+        vm.startPrank(_DEFAULT_ADMIN);
+        brBTCInstance.unfreezeUsers(users);
+        vm.stopPrank();
+
+        assertEq(brBTCInstance.frozenUsers(_alice), false);
+
+        vm.startPrank(_alice);
+        brBTCInstance.transfer(address(0xbabecafe0001), 1);
+        vm.stopPrank();
+
+        assertEq(brBTCInstance.balanceOf(_alice), 0);
+    }
 }
