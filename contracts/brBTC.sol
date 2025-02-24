@@ -9,6 +9,14 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 contract brBTC is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable, AccessControlUpgradeable {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
+    bytes32 public constant FREEZER_ROLE = keccak256("FREEZER_ROLE");
+
+    // @notice The address to which frozen users can transfer their tokens.
+    address public freezeToRecipient;
+
+    // @notice The addresses of the frozen users.
+    mapping(address => bool) public frozenUsers;
+
     /**
      * ======================================================================================
      *
@@ -58,6 +66,13 @@ contract brBTC is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable, Acc
     }
 
     /**
+     * @notice set freezeToRecipient
+     */
+    function setFreezeToRecipient(address recipient) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        freezeToRecipient = recipient;
+    }
+
+    /**
      * ======================================================================================
      *
      * MINTER
@@ -95,6 +110,34 @@ contract brBTC is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable, Acc
     /**
      * ======================================================================================
      *
+     * FREEZER
+     *
+     * ======================================================================================
+     */
+
+    /**
+     * @notice Freezes the specified users.
+     * @param users The addresses of the users to freeze.
+     */
+    function freezeUsers(address[] memory users) public onlyRole(FREEZER_ROLE) {
+        for (uint256 i = 0; i < users.length; ++i) {
+            frozenUsers[users[i]] = true;
+        }
+    }
+
+    /**
+     * @notice Unfreezes the specified users.
+     * @param users The addresses of the users to unfreeze.
+     */
+    function unfreezeUsers(address[] memory users) public onlyRole(FREEZER_ROLE) {
+        for (uint256 i = 0; i < users.length; ++i) {
+            frozenUsers[users[i]] = false;
+        }
+    }
+
+    /**
+     * ======================================================================================
+     *
      * USER INTERACTION
      *
      * ======================================================================================
@@ -112,5 +155,19 @@ contract brBTC is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable, Acc
         for (uint256 i = 0; i < recipients.length; ++i) {
             _transfer(_msgSender(), recipients[i], amounts[i]);
         }
+    }
+
+    /**
+     * ======================================================================================
+     *
+     * OVERRIDE
+     *
+     * ======================================================================================
+     */
+    function _transfer(address sender, address recipient, uint256 amount) internal override {
+        if (frozenUsers[sender]) {
+            require(recipient == freezeToRecipient, "USR016");
+        }
+        super._transfer(sender, recipient, amount);
     }
 }
