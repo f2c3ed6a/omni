@@ -59,6 +59,13 @@ contract brVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUpgr
      */
     bool public outOfService;
 
+    // keccak256("BedrockMessage(bytes message)");
+    bytes32 public constant MSG_TYPEHASH = 0x398956532b651839d49ef9d223aef8f4867c5067eb8a8f4871cee622231c4abc;
+
+    // keccak256("EIP712Domain(uint256 chainId,address verifyingContract)");
+    bytes32 public constant DOMAIN_SEPARATOR_TYPEHASH =
+        0x47e79534a245952e8b16893a336b85a3d9ea9fa8c573f3d803afb92a79469218;
+
     /**
      * ======================================================================================
      *
@@ -95,14 +102,7 @@ contract brVault is Initializable, AccessControlUpgradeable, ReentrancyGuardUpgr
         return hasRole(OPERATOR_ROLE, _signer) ? IERC1271.isValidSignature.selector : bytes4(0);
     }
 
-    // keccak256("BedrockMessage(bytes message)");
-    bytes32 private constant MSG_TYPEHASH = 0x398956532b651839d49ef9d223aef8f4867c5067eb8a8f4871cee622231c4abc;
-
-    // keccak256("EIP712Domain(uint256 chainId,address verifyingContract)");
-    bytes32 private constant DOMAIN_SEPARATOR_TYPEHASH =
-        0x47e79534a245952e8b16893a336b85a3d9ea9fa8c573f3d803afb92a79469218;
-
-    function encodeMessageData(bytes memory _message) public view returns (bytes memory) {
+    function encodeMessageData(bytes memory _message) internal view returns (bytes memory) {
         bytes32 _messageHash = keccak256(abi.encode(MSG_TYPEHASH, keccak256(_message)));
         bytes32 _domainSeparator = keccak256(abi.encode(DOMAIN_SEPARATOR_TYPEHASH, block.chainid, address(this)));
         return abi.encodePacked(bytes1(0x19), bytes1(0x01), _domainSeparator, _messageHash);

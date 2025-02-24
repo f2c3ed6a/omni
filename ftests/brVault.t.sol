@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 import {Test, console} from "forge-std/Test.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
@@ -451,6 +452,48 @@ contract brVaultTest is Test {
         brVaultInstance.mint(_tk, 1 * 1e8);
         assertEq(brBTCInstance.balanceOf(_alice), 1 * 1e8);
         vm.stopPrank();
+    }
+
+    function testSignature() public {
+        (address _operator, uint256 _operatorKey) = makeAddrAndKey("[Operator]");
+
+        vm.startPrank(_DEFAULT_ADMIN);
+        brVaultInstance.grantRole(brVaultInstance.OPERATOR_ROLE(), _operator);
+        vm.stopPrank();
+
+        assertEq(brVaultInstance.hasRole(brVaultInstance.OPERATOR_ROLE(), _operator), true);
+
+        bytes memory originalMessage = "hello";
+        bytes32 originalMessageHash = keccak256(originalMessage);
+
+        bytes memory operatorSignature = signForVault(_operatorKey, brVaultInstance, originalMessageHash);
+        assertEq(
+            brVaultInstance.isValidSignature(originalMessageHash, operatorSignature), IERC1271.isValidSignature.selector
+        );
+
+        (, uint256 _otherKey) = makeAddrAndKey("[SomeOtherGuy]");
+        bytes memory wrongSignature = signForVault(_otherKey, brVaultInstance, originalMessageHash);
+        assertEq(brVaultInstance.isValidSignature(originalMessageHash, wrongSignature), 0x00000000);
+    }
+
+    function signForVault(uint256 _priv, brVault _vault, bytes32 _originalMessageHash)
+        internal
+        view
+        returns (bytes memory)
+    {
+        bytes memory encodedMessage = encodeMessageDataForVault(_vault, abi.encode(_originalMessageHash));
+        bytes32 encodedMessageHash = keccak256(encodedMessage);
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(_priv, encodedMessageHash);
+        bytes memory signature = abi.encodePacked(r, s, v);
+        return signature;
+    }
+
+    function encodeMessageDataForVault(brVault _vault, bytes memory _message) internal view returns (bytes memory) {
+        bytes32 _messageHash = keccak256(abi.encode(_vault.MSG_TYPEHASH(), keccak256(_message)));
+        bytes32 _domainSeparator =
+            keccak256(abi.encode(_vault.DOMAIN_SEPARATOR_TYPEHASH(), block.chainid, address(_vault)));
+        return abi.encodePacked(bytes1(0x19), bytes1(0x01), _domainSeparator, _messageHash);
     }
 }
 
