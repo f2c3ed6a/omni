@@ -14,3 +14,8 @@
 
 ## TransferProxy
 - TransferProxy: [0x782d9A8B9BA6de823835C95242d955508d2b5EA9](https://bscscan.com/address/0x782d9a8b9ba6de823835c95242d955508d2b5ea9)
+
+## Meson
+
+[//]: # (https://bscscan.com/tx/0xacef690be87e07bdc1dc1c4001fd1db4b7ce401ae6f5fe387a44e483943bde0d)
+- [0x70aF4743F85E5E74E3b6dDFa38926c0a762Ad21C](https://bscscan.com/address/0x70aF4743F85E5E74E3b6dDFa38926c0a762Ad21C)
