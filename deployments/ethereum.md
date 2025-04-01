@@ -16,3 +16,6 @@
 
 [//]: # (https://etherscan.io/tx/0x7a07a12f38f2ae103b1e5237dd6f9fb1a91b7fcd984d7c524c72c89f531ff009)
 - [0x70aF4743F85E5E74E3b6dDFa38926c0a762Ad21C](https://etherscan.io/address/0x70aF4743F85E5E74E3b6dDFa38926c0a762Ad21C)
+
+## TransferProxy
+- [0x28bff185e5874e67dc03d8c096e27b775d5058a2](https://etherscan.io/address/0x28bff185e5874e67dc03d8c096e27b775d5058a2)
