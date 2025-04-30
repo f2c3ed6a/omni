@@ -13,4 +13,4 @@
 
 ## TransferProxy
 
-- [0x6E542567d4744D648f6AB47ac80bEcD02e47Ac09](https://beratrail.io/address/0x6E542567d4744D648f6AB47ac80bEcD02e47Ac09)
+- [0x6E542567d4744D648f6AB47ac80bEcD02e47Ac09](https://berascan.com/address/0x6E542567d4744D648f6AB47ac80bEcD02e47Ac09#code)
