@@ -93,7 +93,7 @@ contract brBTC is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable, Acc
      * @notice Burns brBTC.
      * @param amount The amount of brBTC to burn.
      */
-    function burn(uint256 amount) public override onlyRole(MINTER_ROLE) {
+    function burn(uint256 amount) public override {
         _burn(_msgSender(), amount);
     }
 
@@ -102,7 +102,7 @@ contract brBTC is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable, Acc
      * @param account The address of the account to burn from.
      * @param amount The amount of brBTC to burn.
      */
-    function burnFrom(address account, uint256 amount) public override onlyRole(MINTER_ROLE) {
+    function burnFrom(address account, uint256 amount) public override {
         _spendAllowance(account, _msgSender(), amount);
         _burn(account, amount);
     }
