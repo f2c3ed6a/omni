@@ -8,3 +8,6 @@
 
 ## WBTC
 - [0xff204e2681a6fa0e2c3fade68a1b28fb90e4fc5f](https://www.btrscan.com/token/0xff204e2681a6fa0e2c3fade68a1b28fb90e4fc5f)
+
+## Meson
+- 0x70af4743f85e5e74e3b6ddfa38926c0a762ad21c
