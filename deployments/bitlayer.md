@@ -6,6 +6,10 @@
 - brBTC: [0x11b3808A5C0B612BC284EF7c2c6034C77A66BE7b](https://www.btrscan.com/address/0x11b3808A5C0B612BC284EF7c2c6034C77A66BE7b)
 - brVault: [0xbc48e8bb4e270E0C59cC1bc8885571b7BC33d03d](https://www.btrscan.com/address/0xbc48e8bb4e270E0C59cC1bc8885571b7BC33d03d)
 
+## TransferProxy
+
+- [0x321C67fF4c3D313565131F67568bB6c12FB42EF7](https://www.btrscan.com/address/0x321C67fF4c3D313565131F67568bB6c12FB42EF7)
+
 ## WBTC
 - [0xff204e2681a6fa0e2c3fade68a1b28fb90e4fc5f](https://www.btrscan.com/token/0xff204e2681a6fa0e2c3fade68a1b28fb90e4fc5f)
 
