@@ -7,6 +7,7 @@ import {brBTC} from "../contracts/brBTC.sol";
 
 contract MyScript is Script {
     function run() external {
+        address owner = vm.envAddress("OWNER_ADDRESS");
         address deployer = vm.envAddress("DEPLOYER_ADDRESS");
 
         address _proxyAdmin = vm.envAddress("PROXY_ADMIN");
@@ -15,7 +16,7 @@ contract MyScript is Script {
         vm.startBroadcast(deployer);
         console.log("[Signer] deployer:", deployer);
 
-        address _defaultAdmin = deployer;
+        address _defaultAdmin = owner;
         console.log("[Signer] defaultAdmin:", address(_defaultAdmin));
 
         brBTC impl = new brBTC();
