@@ -19,3 +19,7 @@
 
 ## TransferProxy
 - [0x28bff185e5874e67dc03d8c096e27b775d5058a2](https://etherscan.io/address/0x28bff185e5874e67dc03d8c096e27b775d5058a2)
+
+## LayerZero OFT(peer tac)
+
+- [0xbEfC7D6A15cc9bf839E64a16cd43ABD55Dd6633d](https://etherscan.io/address/0xbEfC7D6A15cc9bf839E64a16cd43ABD55Dd6633d)

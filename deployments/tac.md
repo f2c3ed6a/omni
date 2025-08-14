@@ -1,0 +1,10 @@
+# Tac
+
+## Core
+
+- ProxyAdmin: [0x552b0C6688FCaE5cF0164F27Fd129b882a42fA05](https://explorer.tac.build/address/0x552b0C6688FCaE5cF0164F27Fd129b882a42fA05)
+- brBTC: [0x8a94866dF557Bb7FCe88EfF9917237286098e590](https://explorer.tac.build/address/0x8a94866dF557Bb7FCe88EfF9917237286098e590)
+
+## LayerZero OFT(peer eth)
+
+- [0x50fA1411201e2Ac0361FB893E903b80F141b8190](https://explorer.tac.build/address/0x50fA1411201e2Ac0361FB893E903b80F141b8190)
