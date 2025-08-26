@@ -1,0 +1,15 @@
+{
+    "name": "brBTC",
+    "symbol": "brBTC",
+    "description": "Bedrock BTC (brBTC)",
+    "image": "https://raw.githubusercontent.com/Bedrock-Technology/bedrock-static/main/logo/brBTC.svg",
+    "attributes": [],
+    "properties": {
+        "files": [
+            {
+                "uri": "https://raw.githubusercontent.com/Bedrock-Technology/bedrock-static/main/logo/brBTC.svg",
+                "type": "image/svg+xml"
+            }
+        ]
+    }
+}
